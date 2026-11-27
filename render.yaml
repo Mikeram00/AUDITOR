@@ -9,7 +9,7 @@ services:
     region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: python AUDITOR.py
-    healthCheckPath: /api/estado
+    healthCheckPath: /salud
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION

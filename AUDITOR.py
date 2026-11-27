@@ -702,6 +702,10 @@ class Manejador(SimpleHTTPRequestHandler):
         ruta = urlparse(self.path)
         self.cookie_nueva = False
 
+        # Render pregunta aquí si el servicio está vivo. No pide código y no revela nada.
+        if ruta.path == "/salud":
+            return self._json({"ok": True})
+
         if not self._autorizado(ruta):
             return self._pedir_codigo()
 
