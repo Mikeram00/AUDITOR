@@ -710,6 +710,10 @@ class Manejador(SimpleHTTPRequestHandler):
             return self._json({"ok": ODOO.get("ok", False),
                                "version": ODOO.get("version", ""),
                                "almacenes": len(ALMACENES)})
+        # Archivos de la app instalable: el teléfono los baja sin mandar la cookie,
+        # así que no pueden pedir código. No traen datos.
+        if ruta.path in ("/manifest.webmanifest", "/sw.js") or ruta.path.startswith("/iconos/"):
+            return super().do_GET()
 
         if not self._autorizado(ruta):
             return self._pedir_codigo()
