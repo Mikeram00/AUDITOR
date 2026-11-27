@@ -117,8 +117,7 @@
     border-radius:7px;font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
   .b-mini.on{background:var(--negro);color:var(--blanco);border-color:var(--negro)}
 
-  .otros-alm{margin-top:11px;font-size:11px;color:var(--gris);background:var(--alice);
-    border-radius:8px;padding:8px 11px;line-height:1.4}
+  .ayuda-alm{margin-top:11px;font-size:11px;color:var(--gris);line-height:1.4}
   .filtros{display:flex;gap:6px;margin-top:12px}
 
   /* ---------- Lista de conteo ---------- */
@@ -138,13 +137,19 @@
   .pill.falta{background:var(--negro);color:var(--blanco)}
   .pill.nuevo{background:var(--blanco);color:var(--gris);border:1px dashed var(--linea-fuerte)}
   .t-nombre{font-size:12px;font-weight:400;line-height:1.35;margin-bottom:10px}
+  /* Recuadros de almacén: uno por almacén, se toca el que se está contando */
   .desglose{display:flex;gap:6px;margin-bottom:10px}
-  .desglose span{flex:1;background:var(--alice);border-radius:9px;padding:9px 6px;text-align:center;
-    font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gris)}
-  .desglose b{display:block;font-size:19px;font-weight:900;color:var(--negro);
+  .desglose .alm{flex:1;min-width:0;background:var(--alice);border:1px solid var(--alice);border-radius:9px;
+    padding:9px 4px;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--gris);cursor:pointer;font-family:inherit}
+  .desglose .alm b{display:block;font-size:19px;font-weight:900;color:var(--negro);
     letter-spacing:-.03em;margin-bottom:2px}
-  body.grande .desglose span{padding:11px 6px;font-size:10.5px}
-  body.grande .desglose b{font-size:24px}
+  .desglose .alm:active{border-color:var(--negro)}
+  .desglose .alm.on{background:var(--negro);border-color:var(--negro);color:var(--gris-osc)}
+  .desglose .alm.on b{color:var(--blanco)}
+  .tarjeta.sin-alm .desglose .alm{border-style:dashed;border-color:var(--linea-fuerte);background:var(--blanco)}
+  body.grande .desglose .alm{padding:12px 4px;font-size:10.5px}
+  body.grande .desglose .alm b{font-size:24px}
   .inc-foto{width:100%;border-radius:11px;margin-bottom:14px;display:block;border:1px solid var(--linea)}
   .incbar{display:flex;align-items:center;gap:9px;margin-bottom:9px}
   .incbtn{flex:1;border:1px dashed var(--linea-fuerte);background:var(--blanco);color:var(--gris);
@@ -337,15 +342,6 @@
         </button>
       </div>
 
-      <div class="etiqueta">Tipo de auditoría</div>
-      <div class="chips" id="chipsModo">
-        <button class="chip" data-modo="masiva">Masiva · WH+TRANS+AMSF</button>
-        <button class="chip on" data-modo="fast">Fast · un almacén</button>
-      </div>
-
-      <div class="etiqueta" id="etAlmacen">Almacén que estás contando</div>
-      <div class="chips" id="chips"></div>
-
       <div class="continuo">
         <label class="switch">
           <input type="checkbox" id="continuo" checked>
@@ -356,7 +352,7 @@
         <button class="b-mini" id="bEjemplo">Cargar ejemplo</button>
       </div>
 
-      <div class="otros-alm" id="otrosAlm" style="display:none"></div>
+      <div class="ayuda-alm">En cada SKU, toca el almacén que estás contando.</div>
 
       <div class="filtros">
         <button class="chip on" id="fTodos">Todos (<span id="cTodos">0</span>)</button>
@@ -457,6 +453,10 @@
           <input id="altaSku" placeholder="MUK-XXXXX-NEG" style="text-transform:uppercase;font-weight:600">
         </div>
         <div class="campo-m">
+          <label>Almacén donde lo encontraste</label>
+          <div class="chips" id="altaAlm"></div>
+        </div>
+        <div class="campo-m">
           <label for="altaPz">Piezas contadas</label>
           <input id="altaPz" type="number" min="0" value="1">
         </div>
@@ -486,9 +486,8 @@
 // aMano = piezas a la mano · salidas = salidas pendientes
 // ---------------------------------------------------------------
 const CODIGOS = {"Almacén General":"WH","En tránsito":"TRANS","Amazon Seller Flex":"AMSF","Merma":"ME"};
-const MASIVA = ["Almacén General","En tránsito","Amazon Seller Flex"];
-const FAST   = ["Almacén General","En tránsito","Amazon Seller Flex","Merma"];
-const ALMACENES = FAST;
+// Todos los almacenes salen en cada tarjeta; se toca el que se está contando.
+const ALMACENES = ["Almacén General","En tránsito","Amazon Seller Flex","Merma"];
 
 const CATALOGO = {
   "MUK-TAP135-NEG": {
@@ -556,21 +555,21 @@ const CATALOGO = {
 
 let EN_VIVO = false;
 
-const auditoriaDia = [];   // {sku, nombre, almacen, aMano, enSalida, contado, quien, ts, fuera}
-let almacenActivo = ALMACENES[0];
+// Cada tarjeta: {id, sku, nombre, almacen (null hasta que se toca un recuadro), almacenes {nombre: {aMano, disponible, salidas}},
+//                aMano, disponible, enSalida (del almacén elegido), contado, quien, ts, fuera, nota, foto}
+const auditoriaDia = [];
+let siguienteId = 1;
 // SKU que vienen en paquete y cuántas piezas trae cada paquete
 const FAMILIAS_PAQUETE = /TAPFOM|YOG/i;
 const PIEZAS_POR_PAQUETE = 20;
 const paqueteDe = sku => FAMILIAS_PAQUETE.test(sku) ? PIEZAS_POR_PAQUETE : 0;
 
 let grande = false;
-let modoMovil = "fast";                      // "masiva" | "fast"
-const ETIQUETA_MASIVA = "Masiva WH+TRANS+AMSF";
 let ultimoSku = "";
-const contexto = () => modoMovil === "masiva" ? ETIQUETA_MASIVA : almacenActivo;
-const deAqui = r => r.almacen === contexto();
-const sinContar = r => r.auto && r.contado === 0 && !r.nota && !r.foto;
+// Una tarjeta cuenta en la auditoría en cuanto tiene almacén elegido (aunque el conteo sea 0).
+const sinContar = r => !r.almacen && !r.nota && !r.foto;
 const contadas = () => auditoriaDia.filter(r => !sinContar(r));
+const difiere = r => r.contado !== (r.disponible === undefined ? r.aMano : r.disponible);
 let filtro = "todos";
 let destacado = null;
 let tToast = null;
@@ -583,7 +582,13 @@ const salidasDe = w => w && w.salidas
   ? w.salidas.reduce((a, x) => a + (x.piezas || 0), 0)
   : ((w && w.enSalida) || 0);
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const hoy = "2026-11-25";
+const _d0 = new Date();
+const hoy = _d0.getFullYear() + "-" + String(_d0.getMonth() + 1).padStart(2, "0") + "-" + String(_d0.getDate()).padStart(2, "0");
+const almacenesVacios = () => {
+  const o = {};
+  ALMACENES.forEach(a => { o[a] = {aMano:0, disponible:0, salidas:[]}; });
+  return o;
+};
 
 // ---------------------------------------------------------------
 // Reloj y fecha
@@ -633,32 +638,71 @@ function aviso(t, s){
 }
 
 // ---------------------------------------------------------------
-// Almacenes
+// Almacén por tarjeta: se toca el recuadro del almacén que se está contando
 // ---------------------------------------------------------------
-function pintarModoMovil(){
-  Array.prototype.slice.call(document.querySelectorAll("#chipsModo .chip")).forEach(b =>
-    b.classList.toggle("on", b.getAttribute("data-modo") === modoMovil));
-  const fast = modoMovil === "fast";
-  $("etAlmacen").style.display = fast ? "" : "none";
-  $("chips").style.display = fast ? "" : "none";
+function porId(id){ return auditoriaDia.findIndex(r => r.id === Number(id)); }
+function tarjetaDe(sku, alm){ return auditoriaDia.findIndex(r => r.sku === sku && r.almacen === alm); }
+
+function aplicarAlmacen(r, alm){
+  const w = (r.almacenes && r.almacenes[alm]) || {aMano:0, disponible:0, salidas:[]};
+  r.almacen = alm;
+  r.aMano = w.aMano || 0;
+  r.disponible = dispDe(w);
+  r.enSalida = salidasDe(w);
 }
 
-function combinarMasiva(almacenes){
-  let aMano = 0, disponible = 0, salidas = [], detalle = [];
-  MASIVA.forEach(a => {
-    const w = almacenes[a] || {aMano:0, disponible:0, salidas:[]};
-    aMano += w.aMano || 0;
-    disponible += dispDe(w);
-    (w.salidas || []).forEach(s => salidas.push(s));
-    detalle.push({cod: CODIGOS[a] || a, disp: dispDe(w), aMano: w.aMano || 0});
-  });
-  return {aMano, disponible, salidas, detalle};
+function subirTarjeta(r){
+  const i = auditoriaDia.indexOf(r);
+  if (i > 0){ auditoriaDia.splice(i, 1); auditoriaDia.unshift(r); }
+  r.ts = Date.now();
+  destacado = r.id;
 }
 
-function pintarChips(){
-  $("chips").innerHTML = ALMACENES.map(a =>
-    `<button class="chip ${a === almacenActivo ? "on" : ""}" data-alm="${esc(a)}">${esc(a)} (${esc(CODIGOS[a]||"")})</button>`).join("");
+function elegirAlmacen(id, alm){
+  const i = porId(id);
+  if (i === -1) return;
+  const r = auditoriaDia[i];
+  if (r.almacen === alm) return;                       // ya está contando ahí
+
+  // Tarjeta nueva (sin almacén) o sin conteo: solo se le asigna el almacén.
+  if (!r.almacen || r.contado === 0){
+    const primeraVez = !r.almacen;
+    aplicarAlmacen(r, alm);
+    if (primeraVez && r.contado === 0 && $("continuo").checked){
+      r.contado = r.paso || 1;                          // el escaneo que la trajo cuenta como la primera pieza
+    }
+    subirTarjeta(r);
+    beep("scan");
+    aviso(r.sku + " en " + (CODIGOS[alm] || alm), "Odoo tiene " + r.disponible + " disponibles. Cuenta aquí.");
+    pintar();
+    return;
+  }
+
+  // Ya tiene conteo en otro almacén: se abre otra tarjeta del mismo SKU para este almacén.
+  const j = tarjetaDe(r.sku, alm);
+  if (j !== -1){
+    subirTarjeta(auditoriaDia[j]);
+    aviso(r.sku + " ya tiene tarjeta en " + (CODIGOS[alm] || alm), "Te la subí al principio");
+    pintar();
+    return;
+  }
+  const nueva = {id: siguienteId++, sku: r.sku, nombre: r.nombre, almacen: null, almacenes: r.almacenes,
+    porPaquete: r.porPaquete, paso: r.paso, metros: r.metros, aMano:0, disponible:0, enSalida:0,
+    contado:0, ts:Date.now(), fuera: r.fuera};
+  aplicarAlmacen(nueva, alm);
+  auditoriaDia.unshift(nueva);
+  destacado = nueva.id;
+  beep("nuevo");
+  aviso(r.sku + " también en " + (CODIGOS[alm] || alm), "Nueva tarjeta. La de " + (CODIGOS[r.almacen] || r.almacen) + " se queda con " + r.contado);
+  pintar();
 }
+
+$("lista").addEventListener("click", e => {
+  const b = e.target.closest("[data-alm-sel]");
+  if (!b) return;
+  elegirAlmacen(b.getAttribute("data-id"), b.getAttribute("data-alm"));
+});
+
 function pintarGrande(){
   document.body.classList.toggle("grande", grande);
   $("bGrande").textContent = grande ? "Botones normales" : "Botones grandes";
@@ -673,62 +717,31 @@ $("bGrande").addEventListener("click", () => {
         grande ? "Más fácil de picarle con el celular en la mano" : "Caben más SKU en pantalla");
 });
 
-$("chipsModo").addEventListener("click", e => {
-  const b = e.target.closest(".chip");
-  if (!b) return;
-  modoMovil = b.getAttribute("data-modo");
-  pintarModoMovil();
-  pintar();
-  if (ultimoSku) registrar(ultimoSku, true);
-  aviso(modoMovil === "masiva" ? "Auditoría Masiva" : "Auditoría Fast",
-        modoMovil === "masiva" ? "Cuenta el total de WH, TRANS y AMSF juntos"
-                               : "Cuenta un almacén a la vez");
-  $("sku").focus();
-});
-
-$("chips").addEventListener("click", e => {
-  const b = e.target.closest(".chip");
-  if (!b) return;
-  almacenActivo = b.getAttribute("data-alm");
-  pintarChips();
-  pintar();
-  aviso("Almacén: " + almacenActivo, "Lo que escanees se cuenta aquí");
-  if (ultimoSku) registrar(ultimoSku, true);
-  $("sku").focus();
-});
-
 // ---------------------------------------------------------------
 // Escaneo y captura
 // ---------------------------------------------------------------
-function buscarFila(sku, alm){
-  return auditoriaDia.findIndex(r => r.sku === sku && r.almacen === alm);
-}
-
-async function registrar(skuCrudo, auto){
+async function registrar(skuCrudo){
   const sku = String(skuCrudo).trim().toUpperCase();
   if (!sku) return;
-  if (!auto) ultimoSku = sku;
+  ultimoSku = sku;
 
-  const donde = contexto();
-  const i = buscarFila(sku, donde);
-  if (i !== -1){
-    if (auto) return;                      // ya está aquí, no hay nada que traer
-    const r = auditoriaDia[i];
-    r.auto = false;
-    if ($("continuo").checked){
+  // ¿Ya hay tarjeta de este SKU? Se usa la más reciente (la que está más arriba).
+  const r = auditoriaDia.find(x => x.sku === sku);
+  if (r){
+    if (!r.almacen){
+      beep("nuevo");
+      aviso(sku + " ya está en la lista", "Toca el almacén que estás contando");
+    } else if ($("continuo").checked){
       r.contado += (r.paso || 1);
       beep("scan");
-      aviso(r.sku + "  +" + (r.paso || 1),
+      aviso(r.sku + "  +" + (r.paso || 1) + " en " + (CODIGOS[r.almacen] || r.almacen),
             (r.porPaquete ? "Paquetes: " + (r.contado / r.porPaquete) + " · " : "") +
             "Piezas: " + r.contado + " · Odoo " + r.disponible);
     } else {
       beep("scan");
       aviso(r.sku + " ya está en la lista", "Contadas: " + r.contado + " · Odoo " + r.disponible);
     }
-    r.ts = Date.now();
-    destacado = r.sku + "|" + r.almacen;
-    auditoriaDia.splice(i, 1);
-    auditoriaDia.unshift(r);
+    subirTarjeta(r);
     pintar();
     return;
   }
@@ -749,7 +762,7 @@ async function registrar(skuCrudo, auto){
         return;
       }
     } catch(e){
-      aviso("Sin conexión con la computadora", "Revisa que el programa siga abierto");
+      aviso("Sin conexión con el servidor", "Revisa tu internet e intenta de nuevo");
       return;
     }
   } else {
@@ -765,19 +778,16 @@ async function registrar(skuCrudo, auto){
     return;
   }
 
-  const masiva = modoMovil === "masiva";
-  const w = masiva ? combinarMasiva(d.almacenes) : (d.almacenes[almacenActivo] || {aMano:0, enSalida:0});
-  const dondeVa = masiva ? ETIQUETA_MASIVA : almacenActivo;
   const porPaquete = paqueteDe(sku);
-  const fila = {sku, nombre:d.nombre, almacen:dondeVa, detalle: w.detalle || null,
+  const fila = {id: siguienteId++, sku, nombre:d.nombre, almacen:null, almacenes: d.almacenes || almacenesVacios(),
     porPaquete, paso: porPaquete || 1,
-    aMano:w.aMano, disponible: dispDe(w), enSalida:salidasDe(w),
-    metros: d.metros || 0, auto: !!auto,
-    contado: auto ? 0 : (porPaquete || 1), ts:Date.now(), fuera:false};
+    aMano:0, disponible:0, enSalida:0,
+    metros: d.metros || 0,
+    contado:0, ts:Date.now(), fuera:false};
   auditoriaDia.unshift(fila);
-  destacado = sku + "|" + dondeVa;
-  if (!auto) beep("nuevo");
-  aviso(sku, d.nombre + " · Odoo " + w.aMano + " pz" + (fila.metros ? " · " + fila.metros + " m c/u" : ""));
+  destacado = fila.id;
+  beep("nuevo");
+  aviso(sku, d.nombre + " · toca el almacén que estás contando");
   pintar();
 }
 
@@ -812,7 +822,7 @@ async function buscar(q){
       if (q !== ultimaBusca) return;             // llegó tarde, ya escribió otra cosa
       pintarSug((j && j.resultados) || [], q);
     } catch(e){
-      $("sug").innerHTML = `<div class="vacia">No pude buscar en Odoo.<br>Cierra la ventana negra del programa AUDITOR y vuelve a abrirlo.</div>`;
+      $("sug").innerHTML = `<div class="vacia">No pude buscar en Odoo.<br>Revisa tu internet e intenta de nuevo.</div>`;
       $("sug").classList.remove("oculto");
     }
   } else {
@@ -863,7 +873,7 @@ $("bEscanear").addEventListener("click", () => {
   }
   // sin Odoo: simula el disparo del lector con un SKU de ejemplo
   const skus = Object.keys(CATALOGO);
-  const existentes = auditoriaDia.filter(r => r.almacen === almacenActivo);
+  const existentes = auditoriaDia.filter(r => r.almacen);
   const usar = (existentes.length && Math.random() < .7)
     ? existentes[Math.floor(Math.random() * existentes.length)].sku
     : skus[Math.floor(Math.random() * skus.length)];
@@ -873,36 +883,40 @@ $("bEscanear").addEventListener("click", () => {
 // ---------------------------------------------------------------
 // Controles de cantidad
 // ---------------------------------------------------------------
-function cambiar(sku, alm, signo){
-  const i = buscarFila(sku, alm);
+function sinAlmacen(r){
+  beep("nuevo");
+  aviso("Primero elige el almacén", "Toca WH, TRANS, AMSF o ME en la tarjeta de " + r.sku);
+}
+function cambiar(id, signo){
+  const i = porId(id);
   if (i === -1) return;
   const r = auditoriaDia[i];
-  r.auto = false;
+  if (!r.almacen){ sinAlmacen(r); return; }
   r.contado = Math.max(0, r.contado + signo * (r.paso || 1));
-  auditoriaDia[i].ts = Date.now();
+  r.ts = Date.now();
   pintar();
 }
-function fijar(sku, alm, valor){
-  const i = buscarFila(sku, alm);
+function fijar(id, valor){
+  const i = porId(id);
   if (i === -1) return;
+  const r = auditoriaDia[i];
+  if (!r.almacen){ sinAlmacen(r); pintar(); return; }
   const n = parseInt(valor, 10);
-  auditoriaDia[i].auto = false;
-  auditoriaDia[i].contado = isNaN(n) || n < 0 ? 0 : n;
-  auditoriaDia[i].ts = Date.now();
+  r.contado = isNaN(n) || n < 0 ? 0 : n;
+  r.ts = Date.now();
   kpis();
-  pintarPill(sku, alm);
+  pintarPill(id);
 }
 
 $("lista").addEventListener("click", e => {
   const b = e.target.closest("[data-mas],[data-menos]");
   if (!b) return;
-  const sku = b.getAttribute("data-sku"), alm = b.getAttribute("data-alm");
-  cambiar(sku, alm, b.hasAttribute("data-mas") ? 1 : -1);
+  cambiar(b.getAttribute("data-id"), b.hasAttribute("data-mas") ? 1 : -1);
 });
 $("lista").addEventListener("click", e => {
   const b = e.target.closest("[data-paso]");
   if (!b) return;
-  const i = buscarFila(b.getAttribute("data-sku"), b.getAttribute("data-alm"));
+  const i = porId(b.getAttribute("data-id"));
   if (i === -1) return;
   const r = auditoriaDia[i];
   r.paso = r.paso === 1 ? (r.porPaquete || 1) : 1;
@@ -910,100 +924,95 @@ $("lista").addEventListener("click", e => {
 });
 $("lista").addEventListener("change", e => {
   if (!e.target.matches("input[data-pz]")) return;
-  fijar(e.target.getAttribute("data-sku"), e.target.getAttribute("data-alm"), e.target.value);
+  fijar(e.target.getAttribute("data-id"), e.target.value);
 });
 
 // ---------------------------------------------------------------
 // Pintado
 // ---------------------------------------------------------------
 function pill(r){
-  if (sinContar(r)) return `<span class="pill nuevo">Sin contar aquí</span>`;
+  if (!r.almacen) return `<span class="pill nuevo">Elige almacén</span>`;
   if (r.fuera) return `<span class="pill nuevo">Fuera de Odoo</span>`;
   const dif = r.contado - (r.disponible === undefined ? r.aMano : r.disponible);
   if (dif === 0) return `<span class="pill cuadra">Cuadra</span>`;
   if (dif > 0) return `<span class="pill sobra">+${dif} sobran</span>`;
   return `<span class="pill falta">${dif} faltan</span>`;
 }
-function pintarPill(sku, alm){
-  const r = auditoriaDia[buscarFila(sku, alm)];
-  const el = document.querySelector(`[data-pill="${sku}|${alm}"]`);
+function pintarPill(id){
+  const r = auditoriaDia[porId(id)];
+  const el = document.querySelector(`[data-pill="${id}"]`);
   if (r && el) el.innerHTML = pill(r);
 }
 
 function kpis(){
   const reales = contadas();
   const pz = reales.reduce((a,r) => a + r.contado, 0);
-  const dif = reales.filter(r => r.contado !== (r.disponible === undefined ? r.aMano : r.disponible)).length;
+  const dif = reales.filter(difiere).length;
   $("kRen").textContent = reales.length;
   $("kPz").textContent = pz;
   $("kDif").textContent = dif;
   $("kpiDif").classList.toggle("marcado", dif > 0);
-  const aqui = auditoriaDia.filter(deAqui);
-  $("cTodos").textContent = aqui.length;
-  $("cDif").textContent = aqui.filter(r => !sinContar(r) &&
-    r.contado !== (r.disponible === undefined ? r.aMano : r.disponible)).length;
+  $("cTodos").textContent = auditoriaDia.length;
+  $("cDif").textContent = auditoriaDia.filter(r => !sinContar(r) && difiere(r)).length;
+}
+
+function recuadros(r){
+  return `<div class="desglose">` + ALMACENES.map(a => {
+    const w = (r.almacenes && r.almacenes[a]) || {aMano:0, disponible:0, salidas:[]};
+    return `<button class="alm ${r.almacen === a ? "on" : ""}" data-alm-sel data-id="${r.id}" data-alm="${esc(a)}"
+              title="${esc(a)}"><b>${dispDe(w)}</b>${esc(CODIGOS[a] || a)}</button>`;
+  }).join("") + `</div>`;
 }
 
 function pintar(){
   kpis();
-  const aqui = auditoriaDia.filter(deAqui);
-  const otros = auditoriaDia.length - aqui.length;
-  $("otrosAlm").textContent = otros
-    ? (otros === 1 ? "Tienes 1 renglón en otro almacén." : "Tienes " + otros + " renglones en otros almacenes.") + " Cambia de chip para verlos."
-    : "";
-  $("otrosAlm").style.display = otros ? "" : "none";
   const filas = filtro === "dif"
-    ? aqui.filter(r => !sinContar(r) && r.contado !== (r.disponible === undefined ? r.aMano : r.disponible))
-    : aqui;
+    ? auditoriaDia.filter(r => !sinContar(r) && difiere(r))
+    : auditoriaDia;
 
   if (!filas.length){
     $("lista").innerHTML = auditoriaDia.length
       ? `<div class="vacio"><b>Todo cuadra</b>Ningún renglón tiene diferencia contra Odoo.</div>`
-      : `<div class="vacio"><b>Sin SKU todavía</b>Escanea o escribe un SKU y presiona Enter. Odoo te da las piezas a la mano y tú capturas lo que contaste.</div>`;
+      : `<div class="vacio"><b>Sin SKU todavía</b>Escanea o escribe un SKU y presiona Enter. Verás lo que Odoo tiene en cada almacén; toca el que estás contando.</div>`;
     return;
   }
 
   $("lista").innerHTML = filas.map(r => {
-    const clave = r.sku + "|" + r.almacen;
+    const conAlm = !!r.almacen;
     return `
-    <div class="tarjeta ${destacado === clave ? "flash" : ""}">
+    <div class="tarjeta ${destacado === r.id ? "flash" : ""} ${conAlm ? "" : "sin-alm"}">
       <div class="t-arriba">
         <span class="t-sku">${esc(r.sku)}</span>
-        <span class="t-alm">${esc(r.almacen)}</span>
-        <span data-pill="${esc(clave)}">${pill(r)}</span>
+        <span class="t-alm">${conAlm ? esc(r.almacen) : "Sin almacén"}</span>
+        <span data-pill="${r.id}">${pill(r)}</span>
       </div>
       <div class="t-nombre">${esc(r.nombre)}</div>
-      ${r.detalle && r.detalle.length ? `
-      <div class="desglose">
-        ${r.detalle.map(x => `<span><b>${x.disp}</b>${esc(x.cod)}</span>`).join("")}
-      </div>` : ""}
-      ${r.porPaquete ? `
+      ${recuadros(r)}
+      ${r.porPaquete && conAlm ? `
       <div class="paqline">
         <span class="paqinfo">${(r.contado / r.porPaquete).toLocaleString("es-MX", {maximumFractionDigits:2})} de ${(r.disponible / r.porPaquete).toLocaleString("es-MX", {maximumFractionDigits:2})} paquetes de ${r.porPaquete}</span>
-        <button class="paqbtn ${r.paso === r.porPaquete ? "on" : ""}"
-                data-paso data-sku="${esc(r.sku)}" data-alm="${esc(r.almacen)}">
+        <button class="paqbtn ${r.paso === r.porPaquete ? "on" : ""}" data-paso data-id="${r.id}">
           ${r.paso === r.porPaquete ? "de " + r.porPaquete + " en " + r.porPaquete : "de 1 en 1"}
         </button>
       </div>` : ""}
       <div class="incbar">
         ${r.foto ? `<img class="incmini" src="${r.foto}" alt="">` : ""}
-        <button class="incbtn ${r.nota || r.foto ? "tiene" : ""}"
-                data-inc data-sku="${esc(r.sku)}" data-alm="${esc(r.almacen)}">
+        <button class="incbtn ${r.nota || r.foto ? "tiene" : ""}" data-inc data-id="${r.id}">
           ${r.nota || r.foto ? (r.nota ? esc(r.nota.slice(0,34)) : "Incidencia con foto") : "+ Incidencia"}
         </button>
       </div>
       <div class="t-abajo">
         <div class="odoo">
-          Disponible <b>${r.disponible}</b><br>
-          A la mano ${r.aMano} · en salida ${r.enSalida || 0}${r.metros ? "<br>Metraje " + (r.contado * r.metros).toLocaleString("es-MX") + " m" : ""}
+          ${conAlm
+            ? `Disponible <b>${r.disponible}</b><br>A la mano ${r.aMano} · en salida ${r.enSalida || 0}${r.metros ? "<br>Metraje " + (r.contado * r.metros).toLocaleString("es-MX") + " m" : ""}`
+            : `Toca un almacén<br>para empezar a contar`}
         </div>
         <div class="controles">
-          <button class="cbtn" data-menos data-sku="${esc(r.sku)}" data-alm="${esc(r.almacen)}" aria-label="Quitar una pieza">
+          <button class="cbtn" data-menos data-id="${r.id}" aria-label="Quitar una pieza">
             <svg viewBox="0 0 24 24"><path d="M5 11h14v2H5z"/></svg>
           </button>
-          <input type="number" min="0" inputmode="numeric" value="${r.contado}"
-                 data-pz data-sku="${esc(r.sku)}" data-alm="${esc(r.almacen)}" onfocus="this.select()">
-          <button class="cbtn mas" data-mas data-sku="${esc(r.sku)}" data-alm="${esc(r.almacen)}" aria-label="Sumar una pieza">
+          <input type="number" min="0" inputmode="numeric" value="${r.contado}" data-pz data-id="${r.id}" onfocus="this.select()">
+          <button class="cbtn mas" data-mas data-id="${r.id}" aria-label="Sumar una pieza">
             <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>
           </button>
         </div>
@@ -1017,24 +1026,24 @@ function pintar(){
 // ---------------------------------------------------------------
 // Incidencias: foto y nota
 // ---------------------------------------------------------------
-let incActual = null;      // {sku, almacen}
+let incActual = null;      // id de la tarjeta
 let fotoTemporal = null;
 let fotoDim = null;
 
 $("lista").addEventListener("click", e => {
   const b = e.target.closest("[data-inc]");
   if (!b) return;
-  abrirIncidencia(b.getAttribute("data-sku"), b.getAttribute("data-alm"));
+  abrirIncidencia(b.getAttribute("data-id"));
 });
 
-function abrirIncidencia(sku, alm){
-  const i = buscarFila(sku, alm);
+function abrirIncidencia(id){
+  const i = porId(id);
   if (i === -1) return;
   const r = auditoriaDia[i];
-  incActual = {sku, almacen: alm};
+  incActual = r.id;
   fotoTemporal = r.foto || null;
   fotoDim = r.foto ? {w: r.fotoAncho || 4, h: r.fotoAlto || 3} : null;
-  $("incSku").textContent = sku + " · " + alm;
+  $("incSku").textContent = r.sku + " · " + (r.almacen ? (CODIGOS[r.almacen] || r.almacen) : "sin almacén");
   $("incNota").value = r.nota || "";
   pintarFotoTemporal();
   abrir("mIncidencia");
@@ -1082,14 +1091,13 @@ $("camara").addEventListener("change", () => {
 
 $("bGuardarInc").addEventListener("click", () => {
   if (!incActual) return;
-  const i = buscarFila(incActual.sku, incActual.almacen);
+  const i = porId(incActual);
   if (i === -1) return;
   const nota = $("incNota").value.trim();
   if (!nota && !fotoTemporal){ aviso("Falta algo", "Toma la foto o escribe qué pasó"); return; }
   auditoriaDia[i].nota = nota;
   auditoriaDia[i].foto = fotoTemporal;
   if (fotoDim){ auditoriaDia[i].fotoAncho = fotoDim.w; auditoriaDia[i].fotoAlto = fotoDim.h; }
-  auditoriaDia[i].auto = false;
   cerrar("mIncidencia");
   incActual = null; fotoTemporal = null; fotoDim = null;
   pintar();
@@ -1098,7 +1106,7 @@ $("bGuardarInc").addEventListener("click", () => {
 
 $("bQuitarInc").addEventListener("click", () => {
   if (!incActual) return;
-  const i = buscarFila(incActual.sku, incActual.almacen);
+  const i = porId(incActual);
   if (i !== -1){ delete auditoriaDia[i].nota; delete auditoriaDia[i].foto; }
   cerrar("mIncidencia");
   incActual = null; fotoTemporal = null;
@@ -1124,28 +1132,42 @@ function cerrar(id){ $(id).classList.add("oculto"); }
 document.querySelectorAll("[data-cerrar]").forEach(b =>
   b.addEventListener("click", () => cerrar(b.getAttribute("data-cerrar"))));
 
-$("bAlta").addEventListener("click", () => { $("altaSku").value = ""; $("altaPz").value = 1; abrir("mAlta"); });
+// Almacén elegido en el modal de "SKU fuera de Odoo"
+let altaAlmacen = ALMACENES[0];
+function pintarAltaAlm(){
+  $("altaAlm").innerHTML = ALMACENES.map(a =>
+    `<button type="button" class="chip ${a === altaAlmacen ? "on" : ""}" data-alta-alm="${esc(a)}">${esc(CODIGOS[a] || a)}</button>`).join("");
+}
+$("altaAlm").addEventListener("click", e => {
+  const b = e.target.closest("[data-alta-alm]");
+  if (!b) return;
+  altaAlmacen = b.getAttribute("data-alta-alm");
+  pintarAltaAlm();
+});
+
+$("bAlta").addEventListener("click", () => { $("altaSku").value = ""; $("altaPz").value = 1; pintarAltaAlm(); abrir("mAlta"); });
 $("bGuardarAlta").addEventListener("click", () => {
   const sku = $("altaSku").value.trim().toUpperCase();
   if (!sku){ aviso("Falta el SKU", "Escribe la referencia interna"); return; }
   const pz = Math.max(0, parseInt($("altaPz").value, 10) || 0);
   const porPaqueteAlta = paqueteDe(sku);
-  const donde = modoMovil === "masiva" ? ETIQUETA_MASIVA : almacenActivo;
-  const i = buscarFila(sku, donde);
+  const i = tarjetaDe(sku, altaAlmacen);
   if (i !== -1){
     auditoriaDia[i].contado += pz;
+    subirTarjeta(auditoriaDia[i]);
   } else {
-    const d = CATALOGO[sku];
-    const w = d ? (d.almacenes[almacenActivo] || {aMano:0, enSalida:0}) : {aMano:0, enSalida:0};
-    auditoriaDia.unshift({sku, nombre: d ? d.nombre : "Sin nombre en Odoo", almacen:almacenActivo,
-      aMano:w.aMano, disponible: dispDe(w), enSalida:salidasDe(w), metros: (d && d.metros) || 0,
+    const d = EN_VIVO ? null : CATALOGO[sku];
+    const fila = {id: siguienteId++, sku, nombre: d ? d.nombre : "Sin nombre en Odoo", almacen:null,
+      almacenes: d ? d.almacenes : almacenesVacios(), metros: (d && d.metros) || 0,
       porPaquete: porPaqueteAlta, paso: porPaqueteAlta || 1,
-      contado:pz, ts:Date.now(), fuera: !d});
+      aMano:0, disponible:0, enSalida:0, contado:pz, ts:Date.now(), fuera: !d};
+    aplicarAlmacen(fila, altaAlmacen);
+    auditoriaDia.unshift(fila);
+    destacado = fila.id;
   }
-  destacado = sku + "|" + dondeVa;
-  if (!auto) beep("nuevo");
+  beep("nuevo");
   cerrar("mAlta");
-  aviso(sku + " agregado", pz + " piezas en " + almacenActivo);
+  aviso(sku + " agregado", pz + " piezas en " + (CODIGOS[altaAlmacen] || altaAlmacen));
   pintar();
 });
 
@@ -1161,23 +1183,27 @@ $("bVaciar").addEventListener("click", () => {
 
 $("bEjemplo").addEventListener("click", () => {
   let n = 0;
+  const alm = ALMACENES[0];
   Object.keys(CATALOGO).forEach((sku, k) => {
-    if (buscarFila(sku, almacenActivo) !== -1) return;
-    const w = CATALOGO[sku].almacenes[almacenActivo] || {aMano:0, enSalida:0};
-    auditoriaDia.push({sku, nombre:CATALOGO[sku].nombre, almacen:almacenActivo,
-      aMano:w.aMano, enSalida:salidasDe(w),
-      contado: w.aMano - (k % 3 === 0 ? 2 : 0), ts:Date.now() - k * 1000, fuera:false});
+    if (tarjetaDe(sku, alm) !== -1) return;
+    const d = CATALOGO[sku];
+    const fila = {id: siguienteId++, sku, nombre:d.nombre, almacen:null, almacenes:d.almacenes,
+      metros: d.metros || 0, porPaquete: paqueteDe(sku), paso: paqueteDe(sku) || 1,
+      aMano:0, disponible:0, enSalida:0, contado:0, ts:Date.now() - k * 1000, fuera:false};
+    aplicarAlmacen(fila, alm);
+    fila.contado = Math.max(0, fila.disponible - (k % 3 === 0 ? 2 : 0));
+    auditoriaDia.push(fila);
     n++;
   });
-  if (!n){ aviso("Ya están los cuatro", "Cambia de almacén para cargar otros"); return; }
-  aviso(n + " SKU cargados", "Ejemplo de " + almacenActivo);
+  if (!n){ aviso("Ya están los ejemplos", "Toca otro almacén en una tarjeta para probar"); return; }
+  aviso(n + " SKU cargados", "Ejemplo contado en " + alm);
   pintar();
 });
 
 $("bCerrar").addEventListener("click", () => {
   const reales = contadas();
   const pz = reales.reduce((a,r) => a + r.contado, 0);
-  const dif = reales.filter(r => r.contado !== (r.disponible === undefined ? r.aMano : r.disponible)).length;
+  const dif = reales.filter(difiere).length;
   const exa = reales.length ? Math.round((reales.length - dif) / reales.length * 100) : 100;
   $("rRen").textContent = reales.length;
   $("rPz").textContent = pz;
@@ -1205,8 +1231,7 @@ $("bCerrar").addEventListener("click", () => {
 reloj(); setInterval(reloj, 20000);
 $("cabFecha").textContent = "Control Interno · " + fechaLarga();
 try{ grande = localStorage.getItem("auditor_grande") === "1"; } catch(e){}
-pintarChips();
-pintarModoMovil();
+pintarAltaAlm();
 pintarGrande();
 pintar();
 
@@ -1359,53 +1384,60 @@ $("guardar").addEventListener("click", async () => {
   if (!reales.length){ aviso("No hay nada que guardar", "Primero captura al menos un SKU"); return; }
   const quien = $("quien").value.trim() || "—";
   reales.forEach(r => { r.quien = quien; });
+  // Al registro solo va lo del almacén elegido; el detalle de todos los almacenes se queda en la pantalla.
+  const renglones = reales.map(r => {
+    const copia = Object.assign({}, r);
+    delete copia.almacenes;
+    return copia;
+  });
+  const codigos = [];
+  reales.forEach(r => { const c = CODIGOS[r.almacen] || r.almacen; if (codigos.indexOf(c) === -1) codigos.push(c); });
   $("notaExcel").textContent = "Guardando en el registro...";
   try{
     const j = await (await fetch("/api/guardar", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        modo: modoMovil === "masiva" ? "Masiva" : "Fast",
-        almacenes: modoMovil === "masiva" ? "WH + TRANS + AMSF" : (CODIGOS[almacenActivo] || almacenActivo),
+        modo: "Por almacén",
+        almacenes: codigos.join(" + "),
         quien: quien,
         dispositivo: "celular",
-        renglones: reales
+        renglones: renglones
       })
     })).json();
     if (j.ok){
       $("notaExcel").textContent = "Guardada como " + (j.nombre || "") + ". " +
-        (j.sheets && j.sheets.ok ? "Subida al Sheets." : "No subió al Sheets, reintenta desde la computadora.");
+        (j.sheets && j.sheets.ok ? "Subida al Sheets." : "No subió al Sheets; revisa la conexión del Sheets en el servidor.");
       cerrar("mResumen");
-      aviso(j.nombre || "Auditoría guardada", "Ya aparece en el registro de la computadora");
+      aviso(j.nombre || "Auditoría guardada", j.sheets && j.sheets.ok ? "Ya está en el registro y en el Sheets" : "Ya está en el registro");
     } else {
       $("notaExcel").textContent = j.error || "No se pudo guardar.";
     }
   } catch(e){
-    $("notaExcel").textContent = "Sin conexión con la computadora. Revisa que el programa siga abierto.";
+    $("notaExcel").textContent = "Sin conexión con el servidor. Revisa tu internet e intenta de nuevo.";
   }
 });
 
-let descargas = null;
-if (window.claude && window.claude.use){
-  window.claude.use("downloads").then(d => { descargas = d; }).catch(() => {});
-}
-$("excel").addEventListener("click", async () => {
+$("excel").addEventListener("click", () => {
   const reales = contadas();
   if (!reales.length){ aviso("No hay nada que bajar", "Primero captura al menos un SKU"); return; }
   const quien = $("quien").value.trim() || "—";
   reales.forEach(r => { r.quien = quien; });
-  if (!descargas){
-    $("notaExcel").textContent = "Aquí la descarga no está disponible. En la versión final el Excel lo genera el programa de tu PC.";
-    return;
-  }
   $("notaExcel").textContent = "Preparando el Excel...";
   try{
-    await descargas.save({filename:"Auditoria_SKU_" + hoy + ".xlsx", data: construirXlsx(reales)});
+    const blob = construirXlsx(reales);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Auditoria_SKU_" + hoy + ".xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
     $("notaExcel").textContent = "Excel descargado con el formato de tu machote.";
     cerrar("mResumen");
-    aviso("Excel descargado", auditoriaDia.length + " renglones");
+    aviso("Excel descargado", reales.length + " renglones");
   } catch(e){
-    if (e && e.code === "declined"){ $("notaExcel").textContent = "Descarga cancelada."; return; }
     $("notaExcel").textContent = "No se pudo descargar el Excel. " + ((e && e.message) || "");
   }
 });

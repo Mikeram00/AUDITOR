@@ -19,10 +19,10 @@ guardada se manda también al Google Sheets de auditorías.
 **Solo lectura.** El programa únicamente consulta Odoo. No crea, no modifica y
 no valida nada.
 
-## Dos modos
+## Cómo se elige el almacén
 
-- **Masiva**: toma de golpe tres almacenes, WH, TRANS y AMSF.
-- **Fast**: eliges un almacén, WH, TRANS, AMSF o ME.
+- **En el celular**: cada SKU muestra un recuadro por almacén (WH, TRANS, AMSF y ME) con su disponible. Tocas el que estás contando y ahí queda el conteo. Si tocas otro almacén en una tarjeta que ya tiene piezas, se abre otra tarjeta del mismo SKU para ese almacén.
+- **En la computadora**: dos modos. **Masiva** toma de golpe WH, TRANS y AMSF; **Fast** cuenta un almacén a la vez.
 
 ## Dos formas de correrlo
 
