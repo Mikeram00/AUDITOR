@@ -705,6 +705,11 @@ class Manejador(SimpleHTTPRequestHandler):
         # Render pregunta aquí si el servicio está vivo. No pide código y no revela nada.
         if ruta.path == "/salud":
             return self._json({"ok": True})
+        # Estado de la conexión: tampoco pide código (solo dice si Odoo contestó y su versión).
+        if ruta.path == "/api/estado":
+            return self._json({"ok": ODOO.get("ok", False),
+                               "version": ODOO.get("version", ""),
+                               "almacenes": len(ALMACENES)})
 
         if not self._autorizado(ruta):
             return self._pedir_codigo()
