@@ -1,0 +1,2 @@
+# El AUDITOR usa solo la librería estándar de Python. No necesita paquetes.
+# Este archivo existe porque Render lo pide al construir el servicio.

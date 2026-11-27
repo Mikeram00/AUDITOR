@@ -1,0 +1,22 @@
+# Las llaves nunca entran al repositorio
+odoo_config_ecommerce.py
+sheets_config.py
+*config*ecommerce*.py
+
+# Lo que escribe el programa al correr
+REGISTROS/
+diagnostico.json
+datos.json
+
+# Archivos de Python y del sistema
+__pycache__/
+*.pyc
+Thumbs.db
+desktop.ini
+
+# El recibidor del Sheets trae la clave escrita
+RECIBIDOR SHEETS.gs.txt
+
+# Copias viejas de trabajo
+index-1.html
+*.respaldo*

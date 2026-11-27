@@ -1,0 +1,37 @@
+# Plano de despliegue para Render (https://render.com).
+# En Render: New > Blueprint > elegir el repo AUDITOR. Render lee este archivo,
+# crea el servicio y pide los valores de las variables marcadas con sync: false.
+services:
+  - type: web
+    name: auditor
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: python AUDITOR.py
+    healthCheckPath: /api/estado
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.4"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Llave de Odoo (usuario de solo lectura). Se capturan en el panel de Render.
+      - key: ODOO_URL
+        sync: false
+      - key: ODOO_DB
+        sync: false
+      - key: ODOO_USER
+        sync: false
+      - key: ODOO_API_KEY
+        sync: false
+      # Google Sheets: direccion del recibidor (termina en /exec) y su clave.
+      - key: SHEETS_URL
+        sync: false
+      - key: SHEETS_CLAVE
+        sync: false
+      # Codigo para entrar desde el telefono y clave para borrar auditorias.
+      - key: AUDITOR_CODIGO
+        sync: false
+      - key: AUDITOR_CLAVE_BORRAR
+        sync: false

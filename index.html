@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AUDITOR — Control Interno · CeroCero</title>
+<!-- Para instalarse como aplicación en el teléfono -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="AUDITOR">
+<link rel="apple-touch-icon" href="/iconos/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/iconos/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --negro:#000000;
+    --blanco:#ffffff;
+    --alice:#eaf0f5;
+    --linea:rgba(0,0,0,.14);
+    --linea-fuerte:rgba(0,0,0,.28);
+    --gris:rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--blanco);
+    color:var(--negro);
+    font-family:"Montserrat","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight:300;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:36px 28px 80px}
+
+  /* ---------- Encabezado ---------- */
+  header{display:flex;align-items:center;gap:30px;flex-wrap:wrap;
+    border-bottom:1px solid var(--negro);padding-bottom:22px}
+  .cc-logo{height:40px;width:auto;display:block}
+  .marca-zona{padding-right:30px;border-right:1px solid var(--linea);display:flex;align-items:center;min-height:40px}
+  .titulo{font-weight:900;font-size:40px;line-height:1;letter-spacing:-.02em;text-transform:uppercase;margin:0}
+  .sello{margin-left:auto;font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--negro);color:var(--blanco);padding:7px 13px;border-radius:4px;align-self:center}
+
+  .aviso{margin-top:24px;padding:14px 16px;background:var(--alice);border-radius:6px;font-size:13px}
+  .aviso strong{font-weight:600}
+
+  /* ---------- Paneles ---------- */
+  .panel{border:1px solid var(--linea);border-radius:8px;margin-top:22px;overflow:hidden;background:var(--blanco)}
+  .panel-titulo{font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    padding:15px 20px;border-bottom:1px solid var(--linea)}
+  .panel-titulo .paso{font-weight:900;margin-right:9px}
+  .panel-cuerpo{padding:22px 20px}
+
+  .fila{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+  .campo{display:flex;flex-direction:column;gap:6px}
+  .campo label{font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris)}
+  input,select{font-family:inherit;font-size:14px;font-weight:400;padding:11px 12px;
+    border:1px solid var(--linea-fuerte);border-radius:5px;background:var(--blanco);color:var(--negro)}
+  input:focus,select:focus{outline:2px solid var(--negro);outline-offset:-2px}
+  input#sku{min-width:280px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  input.corto{width:150px;text-align:right}
+  button{font-family:inherit;font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    cursor:pointer;padding:12px 20px;border:1px solid var(--negro);border-radius:5px;
+    background:var(--negro);color:var(--blanco)}
+  button.sec{background:var(--blanco);color:var(--negro)}
+  button:disabled{opacity:.3;cursor:not-allowed}
+  button:hover:not(:disabled){opacity:.85}
+  .ayuda{font-size:12.5px;color:var(--gris);margin-top:14px}
+
+  /* ---------- Tarjetas de números ---------- */
+  .tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:16px}
+  .tarjeta{background:var(--alice);border-radius:8px;padding:19px 20px;border:1px solid transparent}
+  .tarjeta .et{font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris)}
+  .tarjeta .nm{font-weight:900;font-size:42px;line-height:1.05;letter-spacing:-.03em;margin-top:8px}
+  .tarjeta .pie{font-size:12px;color:var(--gris);margin-top:5px}
+  .tarjeta.azul{background:var(--negro)}
+  .tarjeta.azul .nm{color:var(--blanco)}
+  .tarjeta.azul .et,.tarjeta.azul .pie{color:rgba(255,255,255,.65)}
+  .tarjeta.alerta{background:var(--negro)}
+  .tarjeta.alerta .nm{color:var(--blanco)}
+  .tarjeta.alerta .et{color:rgba(255,255,255,.65)}
+  .tarjeta.alerta .pie{color:var(--blanco);font-weight:600}
+  .tarjeta.ok{background:var(--blanco);border-color:var(--negro)}
+
+  .eco{margin-top:20px;font-size:13px;color:var(--gris);border-left:3px solid var(--negro);padding-left:14px}
+  .eco strong{font-weight:900;color:var(--negro)}
+
+  /* ---------- Tablas ---------- */
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:13px 20px;font-size:13px}
+  th{font-weight:600;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);
+    background:var(--alice);border-bottom:1px solid var(--linea)}
+  td{border-bottom:1px solid var(--linea);font-weight:400}
+  td.num,th.num{text-align:right}
+  tbody tr:last-child td{border-bottom:none}
+  .folio{font-weight:600;letter-spacing:.03em}
+  .etq{display:inline-block;padding:4px 11px;border-radius:3px;font-weight:600;font-size:10px;
+    letter-spacing:.1em;text-transform:uppercase}
+  .etq.l{background:var(--negro);color:var(--blanco)}
+  .etq.b{background:var(--alice);color:var(--negro);border:1px solid var(--linea-fuerte)}
+  .dif-mal{font-weight:900}
+  .dif-bien{font-weight:400;color:var(--gris)}
+  .vacio{padding:38px 20px;text-align:center;color:var(--gris);font-size:13px;border-bottom:none}
+  .oculto{display:none !important}
+  .sku-titulo{font-weight:900;font-size:24px;letter-spacing:-.01em}
+  /* portada estilo Central de Mapeos */
+  .portada-tit{font-weight:900;font-size:54px;line-height:1;letter-spacing:-.03em;margin:34px 0 0}
+  .portada-tx{font-weight:300;font-size:16px;line-height:1.55;max-width:660px;margin-top:16px;color:var(--negro)}
+  .tarjetas-modo{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:34px}
+  .tmodo{position:relative;border:1px solid var(--negro);border-radius:10px;background:var(--blanco);
+    padding:26px 24px 24px;min-height:210px;cursor:pointer;text-align:left;display:flex;flex-direction:column;
+    text-transform:none;letter-spacing:0;color:var(--negro)}
+  .tmodo .et{font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+  .tmodo .nb{font-weight:900;font-size:30px;line-height:1.1;letter-spacing:-.02em}
+  .tmodo .dt{font-weight:300;font-size:13px;line-height:1.5;color:var(--gris);margin-top:10px;max-width:270px}
+  .tmodo .fl{position:absolute;right:22px;bottom:22px;width:50px;height:50px;border-radius:50%;
+    background:var(--negro);display:flex;align-items:center;justify-content:center}
+  .tmodo .fl svg{width:18px;height:18px;fill:var(--blanco)}
+  .tmodo:hover{box-shadow:0 10px 26px -14px rgba(0,0,0,.45)}
+  .tmodo:active{transform:translateY(1px)}
+  .volver{display:inline-flex;align-items:center;gap:9px;background:none;border:none;padding:0;margin-top:26px;
+    cursor:pointer;font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris)}
+  .volver svg{width:13px;height:13px;fill:var(--gris)}
+  .volver:hover{color:var(--negro)}
+  .volver:hover svg{fill:var(--negro)}
+  .cinta{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+  .cinta .md{font-weight:900;font-size:26px;letter-spacing:-.02em}
+  .cinta .al{font-weight:600;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    background:var(--negro);color:var(--blanco);padding:6px 12px;border-radius:5px}
+  .modos{display:flex;gap:10px;flex-wrap:wrap}
+  .modo{flex:1;min-width:220px;text-align:left;padding:15px 17px;border:1px solid var(--linea-fuerte);
+    border-radius:8px;background:var(--blanco);color:var(--negro);cursor:pointer;text-transform:none;letter-spacing:0}
+  .modo .mt{font-weight:900;font-size:16px;letter-spacing:-.01em;text-transform:uppercase}
+  .modo .ms{font-weight:300;font-size:12px;color:var(--gris);margin-top:4px;line-height:1.4}
+  .modo.on{background:var(--negro);border-color:var(--negro);color:var(--blanco)}
+  .modo.on .ms{color:rgba(255,255,255,.7)}
+  .sug{position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:420px;max-width:92vw;z-index:40;
+    background:var(--blanco);border:1px solid var(--negro);border-radius:9px;overflow:hidden;
+    max-height:330px;overflow-y:auto;box-shadow:0 16px 38px -14px rgba(0,0,0,.4)}
+  .sug button{display:block;width:100%;text-align:left;border:none;background:none;padding:11px 14px;
+    border-bottom:1px solid var(--linea);cursor:pointer;font-family:inherit;text-transform:none;letter-spacing:0;color:var(--negro)}
+  .sug button:last-child{border-bottom:none}
+  .sug button:hover{background:var(--alice)}
+  .sug .s1{font-size:13px;font-weight:700;letter-spacing:.03em}
+  .sug .s2{font-size:12px;font-weight:300;color:var(--gris);margin-top:2px}
+  .sug .vacia{padding:15px;font-size:12.5px;color:var(--gris);text-align:center}
+  .tabla-ancha{overflow-x:auto}
+  table.compacta th,table.compacta td{padding:11px 12px;font-size:12.5px;white-space:nowrap}
+  table.compacta th{font-size:10px;letter-spacing:.09em}
+  table.compacta button{padding:8px 13px;font-size:10px}
+  .acciones{display:flex;gap:8px;justify-content:flex-end}
+  .verfoto{color:var(--negro);font-weight:600;white-space:nowrap}
+  .capa{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90;
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .dialogo{background:var(--blanco);border-radius:12px;padding:26px;width:100%;max-width:420px}
+  .modal-tit{font-weight:900;font-size:19px;letter-spacing:-.01em;text-transform:uppercase}
+  .dlg-tx{font-size:13px;color:var(--gris);line-height:1.5;margin:10px 0 18px}
+  .dialogo .campo input{width:100%}
+  .paqbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    padding:13px 20px;background:var(--alice);border-bottom:1px solid var(--linea);font-size:13px}
+  .paqbar button{padding:8px 14px;font-size:10px}
+  .fijos{display:flex;gap:8px;flex-wrap:wrap}
+  .fijo{font-size:12px;font-weight:600;background:var(--alice);border:1px solid var(--linea);
+    border-radius:999px;padding:7px 14px}
+  .chip{flex-shrink:0;padding:9px 14px;border:1px solid var(--linea-fuerte);border-radius:999px;
+    background:var(--blanco);color:var(--negro);font-size:12.5px;font-weight:500;cursor:pointer;
+    text-transform:none;letter-spacing:0}
+  .chip.on{background:var(--negro);color:var(--blanco);border-color:var(--negro);font-weight:600}
+  .almacenes{display:flex;gap:9px;flex-wrap:wrap;max-width:620px}
+  .chk{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--linea-fuerte);
+    border-radius:5px;padding:9px 13px;cursor:pointer;font-weight:400;font-size:13px;user-select:none}
+  .chk input{appearance:auto;margin:0;width:15px;height:15px;accent-color:#000;padding:0;border:0}
+  .chk:has(input:checked){background:var(--negro);color:var(--blanco);border-color:var(--negro)}
+  .chk:has(input:checked) input{accent-color:#fff}
+  .mini-btns{display:flex;gap:7px;margin-top:10px}
+  .mini-btns button{padding:7px 12px;font-size:10px}
+  input.mini{width:92px;text-align:right;padding:7px 9px;font-size:13px}
+  .pie-panel{padding:16px 20px;border-top:1px solid var(--linea);font-size:12px;color:var(--gris);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="marca-zona"><svg class="cc-logo" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 864.58 334.97">
+  <defs>
+    <style>
+      .cc-a {
+        fill: none;
+      }
+
+      .cc-b {
+        fill: #010100;
+      }
+    </style>
+  </defs>
+  <path d="M135.73,102.06c-12.86,0-22.62,9.93-22.62,23.02s9.76,23.26,22.62,23.26c4.74,0,9.99-1.77,14.71-4.77,3.83-2.44,8.89-1.77,12,1.5h0c3.94,4.16,3.21,10.84-1.6,14-7.92,5.2-17.35,8.31-26.29,8.31-25.12,0-43.81-18-43.81-42.07s19.17-41.37,44.64-41.37c8.85,0,18,2.75,25.55,7.47,4.76,2.98,5.68,9.45,2.06,13.7l-.2.24c-3.14,3.69-8.65,4.46-12.64,1.68-4.5-3.14-9.61-4.98-14.41-4.98Z"/>
+  <path d="M242.12,87.43v10.41c0,1.92-1.56,3.48-3.48,3.48h-40.56v15.59h36.27c1.92,0,3.48,1.56,3.48,3.48v10.3c0,1.92-1.55,3.48-3.47,3.48l-36.29.11v15.71h41.75c1.92,0,3.48,1.56,3.48,3.48v10.41c0,1.92-1.56,3.48-3.48,3.48h-50.99c-6.93,0-12.54-5.62-12.54-12.54v-58.36c0-6.93,5.62-12.54,12.54-12.54h49.8c1.92,0,3.48,1.56,3.48,3.48Z"/>
+  <path d="M307.5,167.39c-1.29,0-2.48-.72-3.08-1.86l-11.16-21.23h-16.19v19.61c0,1.92-1.56,3.48-3.48,3.48h-14.82c-1.92,0-3.48-1.56-3.48-3.48v-67.42c0-6.93,5.62-12.54,12.54-12.54h24.95c22.14,0,34.76,10.71,34.76,29.28,0,12.62-5.24,21.9-14.88,26.9l13.96,21.9c1.48,2.32-.19,5.36-2.94,5.36h-16.18ZM277.06,126.92h15.83c8.81,0,13.93-4.52,13.93-12.98s-5.12-12.62-13.93-12.62h-15.83v25.59Z"/>
+  <path d="M426.58,125.44c0,23.96-19.28,41.96-45.12,41.96s-45.12-18-45.12-41.96,19.28-41.49,45.12-41.49,45.12,17.76,45.12,41.49ZM358.73,125.55c0,13.32,10.59,23.61,22.97,23.61s22.5-10.28,22.5-23.61-10-23.37-22.5-23.37-22.97,10.05-22.97,23.37Z"/>
+  <path d="M728.85,232.82c12.86,0,22.62-9.93,22.62-23.02s-9.76-23.26-22.62-23.26c-4.74,0-9.99,1.77-14.71,4.77-3.83,2.44-8.89,1.77-12-1.5h0c-3.94-4.16-3.21-10.84,1.6-14,7.92-5.2,17.35-8.31,26.29-8.31,25.12,0,43.81,18,43.81,42.07s-19.17,41.37-44.64,41.37c-8.85,0-18-2.75-25.55-7.47-4.76-2.98-5.68-9.45-2.06-13.7l.2-.24c3.14-3.69,8.65-4.46,12.64-1.68,4.5,3.14,9.61,4.98,14.41,4.98Z"/>
+  <path d="M622.46,247.45v-10.41c0-1.92,1.56-3.48,3.48-3.48h40.56v-15.59h-36.27c-1.92,0-3.48-1.56-3.48-3.48v-10.3c0-1.92,1.55-3.48,3.47-3.48l36.29-.11v-15.71h-41.75c-1.92,0-3.48-1.56-3.48-3.48v-10.41c0-1.92,1.56-3.48,3.48-3.48h50.99c6.93,0,12.54,5.62,12.54,12.54v58.36c0,6.93-5.62,12.54-12.54,12.54h-49.8c-1.92,0-3.48-1.56-3.48-3.48Z"/>
+  <path d="M557.08,167.48c1.29,0,2.48.72,3.08,1.86l11.16,21.23h16.19v-19.61c0-1.92,1.56-3.48,3.48-3.48h14.82c1.92,0,3.48,1.56,3.48,3.48v67.42c0,6.93-5.62,12.54-12.54,12.54h-24.95c-22.14,0-34.76-10.71-34.76-29.28,0-12.62,5.24-21.9,14.88-26.9l-13.96-21.9c-1.48-2.32.19-5.36,2.94-5.36h16.18ZM587.52,207.96h-15.83c-8.81,0-13.93,4.52-13.93,12.98s5.12,12.62,13.93,12.62h15.83v-25.59Z"/>
+  <path d="M438,209.44c0-23.96,19.28-41.96,45.12-41.96s45.12,18,45.12,41.96-19.28,41.49-45.12,41.49-45.12-17.76-45.12-41.49ZM505.85,209.32c0-13.32-10.59-23.61-22.97-23.61s-22.5,10.28-22.5,23.61,10,23.37,22.5,23.37,22.97-10.05,22.97-23.37Z"/>
+  <path class="cc-b" d="M509.55,93.7l-146.46,145.86-.14.14-.13.14c-.79.85-1.91,1.34-3.06,1.34h-4.72l146.46-145.86.14-.14.13-.14c.79-.85,1.91-1.34,3.06-1.34h4.72M524.74,83.95h-19.91c-3.88,0-7.58,1.61-10.22,4.46l-157.32,156.67c-2.07,2.23-.49,5.86,2.55,5.86h19.91c3.88,0,7.58-1.61,10.22-4.46l157.32-156.67c2.07-2.23.49-5.86-2.55-5.86h0Z"/>
+  <rect class="cc-a" x=".5" y=".5" width="863.58" height="333.97"/>
+</svg></div>
+    <div>
+      <h1 class="titulo">Auditor</h1>
+      <div class="bajada">Control Interno · Auditoría de existencias por SKU</div>
+    </div>
+    <div class="sello">Solo lectura</div>
+  </header>
+
+  <!-- ================= PORTADA ================= -->
+  <section id="portada">
+    <h2 class="portada-tit">Central de Auditorías</h2>
+    <p class="portada-tx">Herramienta de Control Interno: elige el tipo de auditoría, escribe el SKU y Odoo te
+    regresa las piezas a la mano y las que están en salida en ese momento. La consulta es de solo lectura,
+    nunca modifica nada en Odoo.</p>
+
+    <div class="tarjetas-modo">
+      <button class="tmodo" data-modo="masiva">
+        <div class="et">Auditoría</div>
+        <div class="nb">Masiva</div>
+        <div class="dt">Toma de golpe los tres almacenes: Almacén General, En tránsito y Amazon Seller Flex.</div>
+        <span class="fl"><svg viewBox="0 0 24 24"><path d="M13.2 5.6 11.8 7l4 4H4v2h11.8l-4 4 1.4 1.4L19.6 12z"/></svg></span>
+      </button>
+      <button class="tmodo" data-modo="fast">
+        <div class="et">Auditoría</div>
+        <div class="nb">Fast</div>
+        <div class="dt">Eliges un solo almacén: Almacén General, En tránsito, Amazon Seller Flex o Merma.</div>
+        <span class="fl"><svg viewBox="0 0 24 24"><path d="M13.2 5.6 11.8 7l4 4H4v2h11.8l-4 4 1.4 1.4L19.6 12z"/></svg></span>
+      </button>
+      <button class="tmodo" data-modo="registro">
+        <div class="et">Consulta</div>
+        <div class="nb">Registro</div>
+        <div class="dt">Las auditorías ya guardadas, las que hiciste aquí y las que se cerraron desde el celular.</div>
+        <span class="fl"><svg viewBox="0 0 24 24"><path d="M13.2 5.6 11.8 7l4 4H4v2h11.8l-4 4 1.4 1.4L19.6 12z"/></svg></span>
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ================= TRABAJO ================= -->
+  <section id="trabajo" class="oculto">
+    <button class="volver" id="bVolver">
+      <svg viewBox="0 0 24 24"><path d="M10.8 5.6 12.2 7l-4 4H20v2H8.2l4 4-1.4 1.4L4.4 12z"/></svg>
+      Volver a la portada
+    </button>
+    <div class="cinta">
+      <span class="md" id="modoNombre">Auditoría Masiva</span>
+      <span class="al" id="modoAlmacenes">WH + TRANS + AMSF</span>
+    </div>
+
+  <div class="aviso" id="aviso">
+    <strong>Maqueta para revisión.</strong> Los números son de ejemplo, todavía no está conectada a Odoo.
+    Prueba con MUK-TAP135-NEG, CER-MANC10-GRI o VIN-TEXNEG200-10M, que es de piso y lleva metraje.
+  </div>
+
+  <!-- 1 -->
+  <div class="panel">
+    <div class="panel-titulo"><span class="paso">01</span>¿Qué SKU vamos a auditar hoy?</div>
+    <div class="panel-cuerpo">
+      <div class="fila">
+        <div class="campo" style="position:relative">
+          <label for="sku">SKU o referencia interna</label>
+          <input id="sku" placeholder="Escribe y te voy sugiriendo" autocomplete="off">
+          <div class="sug oculto" id="sug"></div>
+        </div>
+        <button id="consultar">Consultar en Odoo</button>
+      </div>
+      <div class="campo" id="zonaMasiva" style="margin-top:22px">
+        <label>Almacenes que entran en la masiva</label>
+        <div class="fijos" id="listaMasiva"></div>
+      </div>
+
+      <div class="campo oculto" id="zonaFast" style="margin-top:20px">
+        <label>¿De qué almacén quieres las piezas?</label>
+        <div class="almacenes" id="almacenes"></div>
+      </div>
+      <div class="ayuda" id="ayuda">Modo Masiva: toma los tres almacenes de golpe (WH, TRANS y AMSF).</div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="panel oculto" id="panelResultado">
+    <div class="panel-titulo"><span class="paso">02</span>Lo que dice Odoo en este momento</div>
+    <div class="panel-cuerpo">
+      <div class="sku-titulo" id="resSku"></div>
+      <div class="ayuda" style="margin:4px 0 0" id="resNombre"></div>
+      <div class="ayuda" style="margin:2px 0 20px" id="resOtros"></div>
+
+      <div class="tarjetas">
+        <div class="tarjeta azul">
+          <div class="et">Disponible para uso</div>
+          <div class="nm" id="nDisponible">0</div>
+          <div class="pie" id="pieDisponible">es contra esto que se audita</div>
+        </div>
+        <div class="tarjeta">
+          <div class="et">Piezas a la mano</div>
+          <div class="nm" id="nAMano">0</div>
+          <div class="pie" id="pieAMano">existencia total en el almacén</div>
+        </div>
+        <div class="tarjeta">
+          <div class="et">Piezas en salida ahora</div>
+          <div class="nm" id="nSalida">0</div>
+          <div class="pie" id="pieSalida">comprometidas en salidas pendientes</div>
+        </div>
+        <div class="tarjeta oculto" id="tarjetaMetros">
+          <div class="et">Metraje a la mano</div>
+          <div class="nm" id="nMetros">0</div>
+          <div class="pie" id="pieMetros">metros totales de la variante</div>
+        </div>
+        <div class="tarjeta" id="tarjetaDif">
+          <div class="et">Diferencia contra el conteo</div>
+          <div class="nm" id="nDif">—</div>
+          <div class="pie" id="pieDif">captura el conteo físico abajo</div>
+        </div>
+      </div>
+
+      <div class="eco">
+        El conteo se compara contra las <strong id="eco1">0</strong> piezas disponibles para uso.
+        En el almacén hay <strong id="eco2">0</strong> a la mano en total, de las cuales
+        <strong id="eco3">0</strong> ya están apartadas y por eso no entran a la cuenta.
+      </div>
+      <div class="eco oculto" id="ecoMetros" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel-titulo" style="border-top:1px solid var(--linea)">Detalle por almacén y captura del conteo</div>
+    <div class="paqbar oculto" id="zonaPaquete">
+      <span id="paqTexto">Este SKU viene en paquetes.</span>
+      <button class="sec" id="bPaquetes">Capturar en paquetes</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Almacén</th><th class="num">A la mano</th><th class="num">En salida</th>
+          <th class="num">Disponible</th><th class="num" id="thContado">Contado</th><th class="num">Diferencia</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoDetalle"></tbody>
+    </table>
+
+    <div class="panel-titulo" style="border-top:1px solid var(--linea)">Salidas pendientes que suman esas piezas</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Almacén</th><th>Folio</th><th>Fecha</th><th>Canal o cliente</th>
+          <th class="num">Piezas</th><th>Estado en Odoo</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoSalidas"></tbody>
+    </table>
+
+    <div class="panel-cuerpo" style="border-top:1px solid var(--linea)">
+      <div class="fila">
+        <div class="campo">
+          <label for="quien">Quién contó</label>
+          <input id="quien" placeholder="Edwin / Sofía / Miguel">
+        </div>
+        <button class="sec" id="agregar">Agregar a la auditoría del día</button>
+      </div>
+      <div class="ayuda">Se agrega un renglón por cada almacén donde hayas capturado el conteo.</div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="panel">
+    <div class="panel-titulo"><span class="paso">03</span>Auditoría de hoy</div>
+    <table>
+      <thead>
+        <tr>
+          <th>SKU</th><th>Almacén</th>
+          <th class="num">A la mano</th><th class="num">En salida</th><th class="num">Disponible</th>
+          <th class="num">Contado</th><th class="num">Metraje</th>
+          <th class="num">Diferencia</th><th>Quién contó</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoDia"></tbody>
+    </table>
+    <div class="pie-panel">
+      <span id="resumenDia">Todavía no hay SKU auditados hoy.</span>
+      <span style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="sec" id="guardar" disabled>Guardar en el registro</button>
+        <button class="sec" id="excel" disabled>Descargar Excel</button>
+      </span>
+    </div>
+    <div class="panel-cuerpo" style="border-top:1px solid var(--linea);padding-top:16px">
+      <div class="ayuda" id="notaExcel" style="margin:0">El Excel sale con el formato de tu machote: una hoja, Auditoría del día, con los SKU auditados.</div>
+    </div>
+  </div>
+
+  </section>
+
+  <!-- ================= REGISTRO ================= -->
+  <section id="registro" class="oculto">
+    <button class="volver" id="bVolver2">
+      <svg viewBox="0 0 24 24"><path d="M10.8 5.6 12.2 7l-4 4H20v2H8.2l4 4-1.4 1.4L4.4 12z"/></svg>
+      Volver a la portada
+    </button>
+    <div class="cinta">
+      <span class="md">Registro de auditorías</span>
+      <span class="al" id="regConteo">0 guardadas</span>
+    </div>
+
+    <div class="panel" id="panelLista">
+      <div class="panel-titulo">Auditorías guardadas</div>
+      <div class="tabla-ancha">
+      <table class="compacta">
+        <thead>
+          <tr>
+            <th>Auditoría</th><th>Tipo</th><th>Almacenes</th><th>Quién contó</th>
+            <th class="num">Renglones</th><th class="num">Difieren</th><th class="num">Incidencias</th>
+            <th>Desde</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoRegistros"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="panel oculto" id="panelDetalle">
+      <div class="panel-titulo" id="detTitulo">Auditoría</div>
+      <div class="panel-cuerpo">
+        <div class="ayuda" id="detDatos" style="margin:0"></div>
+      </div>
+      <div class="tabla-ancha">
+      <table class="compacta">
+        <thead>
+          <tr>
+            <th>SKU</th><th>Almacén</th><th class="num">A la mano</th><th class="num">En salida</th>
+            <th class="num">Disponible</th>
+            <th class="num">Contado</th><th class="num">Metraje</th><th class="num">Diferencia</th>
+            <th>Incidencia</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoDetalleReg"></tbody>
+      </table>
+      </div>
+      <div class="pie-panel">
+        <span id="estadoSheets"></span>
+        <span style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="sec oculto" id="bSubir">Subir al Sheets</button>
+          <button class="sec" id="bVolverLista">Volver a la lista</button>
+          <button class="sec" id="bExcelReg">Descargar Excel</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BORRAR ================= -->
+  <div class="capa oculto" id="capaBorrar">
+    <div class="dialogo">
+      <div class="modal-tit">Borrar auditoría</div>
+      <p class="dlg-tx" id="borrarQue"></p>
+      <div class="campo" style="margin-bottom:16px">
+        <label for="claveBorrar">Contraseña</label>
+        <input type="password" id="claveBorrar" autocomplete="off" placeholder="••••••••">
+      </div>
+      <p class="dlg-tx" id="borrarAviso" style="color:var(--negro);display:none"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="sec" id="bCancelarBorrar">Cancelar</button>
+        <button id="bConfirmarBorrar">Borrar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+
+// ---------------------------------------------------------------
+// DATOS DE EJEMPLO
+// Al conectar Odoo, esto lo llenará el programa que corre en tu PC:
+// aMano   = piezas a la mano del SKU en ese almacén
+// salidas = operaciones de salida pendientes (borrador, lista, esperando)
+// ---------------------------------------------------------------
+const CODIGOS = {"Almacén General":"WH","En tránsito":"TRANS","Amazon Seller Flex":"AMSF","Merma":"ME"};
+const MASIVA = ["Almacén General","En tránsito","Amazon Seller Flex"];
+const FAST   = ["Almacén General","En tránsito","Amazon Seller Flex","Merma"];
+const ALMACENES = FAST;
+
+const CATALOGO = {
+  "MUK-TAP135-NEG": {
+    nombre: "Tapete de yoga 135 cm negro",
+    almacenes: {
+      "Almacén General": {aMano:500, disponible:404, salidas:[
+        {folio:"WH/OUT/18422", fecha:"2026-11-21", canal:"Traslado a ML Fulfillment", piezas:60, estado:"Lista"},
+        {folio:"WH/OUT/18431", fecha:"2026-11-22", canal:"Traslado a Amazon FBA", piezas:24, estado:"Borrador"},
+        {folio:"WH/OUT/18440", fecha:"2026-11-23", canal:"Liverpool", piezas:12, estado:"Lista"}
+      ]},
+      "En tránsito": {aMano:84, disponible:60, salidas:[
+        {folio:"WH/OUT/18444", fecha:"2026-11-23", canal:"Traslado a Amazon FBA", piezas:24, estado:"Lista"}
+      ]},
+      "Amazon Seller Flex": {aMano:120, disponible:104, salidas:[
+        {folio:"FLX/OUT/04455", fecha:"2026-11-23", canal:"Pedidos Flex del día", piezas:16, estado:"Borrador"}
+      ]},
+      "Merma": {aMano:9, disponible:9, salidas:[]}
+    }
+  },
+  "MUK-CINYOG-NEG": {
+    nombre: "Cinturón de yoga negro",
+    almacenes: {
+      "Almacén General": {aMano:184, disponible:154, salidas:[
+        {folio:"WH/OUT/18428", fecha:"2026-11-22", canal:"SHEIN", piezas:30, estado:"Borrador"}
+      ]},
+      "En tránsito": {aMano:0, disponible:0, salidas:[]},
+      "Amazon Seller Flex": {aMano:0, disponible:0, salidas:[]},
+      "Merma": {aMano:4, disponible:4, salidas:[]}
+    }
+  },
+  "CER-MANC10-GRI": {
+    nombre: "Mancuerna 10 kg gris",
+    almacenes: {
+      "Almacén General": {aMano:96, disponible:96, salidas:[]},
+      "En tránsito": {aMano:12, disponible:12, salidas:[]},
+      "Amazon Seller Flex": {aMano:34, disponible:34, salidas:[]},
+      "Merma": {aMano:0, disponible:0, salidas:[]}
+    }
+  },
+  "VIN-TEXNEG200-10M": {
+    nombre: "Piso Tex negro 2.00 m · rollo de 10 m",
+    metros: 10,
+    almacenes: {
+      "Almacén General": {aMano:38, disponible:34, salidas:[
+        {folio:"WH/OUT/18451", fecha:"2026-11-24", canal:"Liverpool", piezas:4, estado:"Lista"}
+      ]},
+      "En tránsito": {aMano:6, disponible:6, salidas:[]},
+      "Amazon Seller Flex": {aMano:0, disponible:0, salidas:[]},
+      "Merma": {aMano:2, disponible:2, salidas:[]}
+    }
+  },
+  "VIN-ESP-AZU": {
+    nombre: "Espuma de limpieza azul",
+    almacenes: {
+      "Almacén General": {aMano:42, disponible:15, salidas:[
+        {folio:"WH/OUT/18435", fecha:"2026-11-22", canal:"TikTok Shop", piezas:18, estado:"Esperando"},
+        {folio:"WH/OUT/18439", fecha:"2026-11-23", canal:"Walmart", piezas:9, estado:"Lista"}
+      ]},
+      "En tránsito": {aMano:0, disponible:0, salidas:[]},
+      "Amazon Seller Flex": {aMano:0, disponible:0, salidas:[]},
+      "Merma": {aMano:6, disponible:6, salidas:[]}
+    }
+  }
+};
+
+// SKU que vienen en paquete y cuántas piezas trae cada paquete
+const FAMILIAS_PAQUETE = /TAPFOM|YOG/i;
+const PIEZAS_POR_PAQUETE = 20;
+const paqueteDe = sku => FAMILIAS_PAQUETE.test(sku) ? PIEZAS_POR_PAQUETE : 0;
+let capturarPaquetes = false;
+
+let EN_VIVO = false;              // true cuando la pagina la abre el programa AUDITOR
+let modo = "masiva";              // "masiva" | "fast"
+let almacenFast = FAST[0];        // el que se elige en modo Fast
+let actual = null;        // consulta en pantalla
+const auditoriaDia = [];  // lo que se va acumulando hoy
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const hoy = "2026-11-23";
+
+// ---------------------------------------------------------------
+// Selección de almacenes
+// ---------------------------------------------------------------
+const conCodigo = a => a + " (" + (CODIGOS[a] || "") + ")";
+
+function pintarModo(){
+  $("zonaMasiva").classList.toggle("oculto", modo !== "masiva");
+  $("zonaFast").classList.toggle("oculto", modo !== "fast");
+  $("listaMasiva").innerHTML = MASIVA.map(a => `<span class="fijo">${esc(conCodigo(a))}</span>`).join("");
+  $("almacenes").innerHTML = FAST.map(a =>
+    `<button class="chip ${a === almacenFast ? "on" : ""}" data-alm="${esc(a)}">${esc(conCodigo(a))}</button>`).join("");
+  $("modoNombre").textContent = modo === "masiva" ? "Auditoría Masiva" : "Auditoría Fast";
+  $("modoAlmacenes").textContent = seleccionados().map(a => CODIGOS[a]).join(" + ");
+}
+
+function abrirModo(m){
+  if (m === "registro") return abrirRegistro();
+  modo = m;
+  $("portada").classList.add("oculto");
+  $("trabajo").classList.remove("oculto");
+  pintarModo();
+  ocultarResultado();
+  $("sku").focus();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function abrirRegistro(){
+  $("portada").classList.add("oculto");
+  $("trabajo").classList.add("oculto");
+  $("registro").classList.remove("oculto");
+  $("panelDetalle").classList.add("oculto");
+  $("panelLista").classList.remove("oculto");
+  cargarRegistros();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+async function cargarRegistros(){
+  $("cuerpoRegistros").innerHTML = `<tr><td colspan="10" class="vacio">Buscando auditorías guardadas...</td></tr>`;
+  let lista = [];
+  try{
+    const j = await (await fetch("/api/registros")).json();
+    lista = (j && j.registros) || [];
+    ultimaLista = lista;
+  } catch(e){
+    $("cuerpoRegistros").innerHTML = `<tr><td colspan="10" class="vacio">El registro vive en el programa de tu computadora. Abre la central con AUDITOR y aquí van a aparecer.</td></tr>`;
+    $("regConteo").textContent = "sin programa";
+    return;
+  }
+  $("regConteo").textContent = lista.length + (lista.length === 1 ? " guardada" : " guardadas");
+  if (!lista.length){
+    $("cuerpoRegistros").innerHTML = `<tr><td colspan="10" class="vacio">Todavía no hay auditorías guardadas. Cierra una y dale Guardar en el registro.</td></tr>`;
+    return;
+  }
+  $("cuerpoRegistros").innerHTML = lista.map(r => `
+    <tr>
+      <td><strong>${esc(r.nombre || r.guardado || "")}</strong><br>
+        <span style="color:var(--gris);font-size:11.5px">${esc(r.hora || (r.guardado || "").slice(11,16))}</span></td>
+      <td>${esc(r.modo || "")}</td>
+      <td>${esc(r.almacenes || "")}</td>
+      <td>${esc(r.quien || "—")}</td>
+      <td class="num">${r.total_renglones || 0}</td>
+      <td class="num ${r.con_diferencia ? "dif-mal" : "dif-bien"}">${r.con_diferencia || 0}</td>
+      <td class="num">${r.incidencias || 0}</td>
+      <td>${r.sheets && r.sheets.ok ? "Sí" : `<span class="dif-mal">No</span>`}</td>
+      <td>${esc(r.dispositivo || "")}</td>
+      <td><span class="acciones">
+        <button class="sec" data-ver="${esc(r.id)}">Ver</button>
+        <button class="sec" data-borrar="${esc(r.id)}">Borrar</button>
+      </span></td>
+    </tr>`).join("");
+}
+
+let registroAbierto = null;
+let ultimaLista = [];
+
+async function verRegistro(id){
+  try{
+    const j = await (await fetch("/api/registro?id=" + encodeURIComponent(id))).json();
+    if (!j.ok){ return; }
+    const r = j.registro;
+    registroAbierto = r;
+    $("detTitulo").textContent = (r.nombre || "Auditoría") + " · " + (r.modo || "");
+    $("detDatos").textContent = "Guardada el " + (r.guardado || "") + " · almacenes " + (r.almacenes || "") +
+      " · contó " + (r.quien || "—") + " · desde " + (r.dispositivo || "") +
+      " · " + (r.piezas_contadas || 0) + " piezas contadas" +
+      (r.concepto ? " · concepto " + r.concepto : "");
+    const subio = r.sheets && r.sheets.ok;
+    $("estadoSheets").textContent = subio
+      ? "Subida al Google Sheets."
+      : "No está en el Google Sheets. " + ((r.sheets && r.sheets.error) || "");
+    $("bSubir").classList.toggle("oculto", !!subio);
+    $("cuerpoDetalleReg").innerHTML = (r.renglones || []).map(f => {
+      const dif = (f.contado || 0) - (f.disponible === undefined ? (f.aMano || 0) : f.disponible);
+      return `<tr>
+        <td class="folio">${esc(f.sku || "")}</td>
+        <td>${esc(f.almacen || "")}</td>
+        <td class="num">${f.aMano || 0}</td>
+        <td class="num">${f.enSalida || 0}</td>
+        <td class="num"><strong>${f.disponible === undefined ? (f.aMano || 0) : f.disponible}</strong></td>
+        <td class="num">${f.contado || 0}</td>
+        <td class="num">${f.metros ? ((f.contado || 0) * f.metros).toLocaleString("es-MX") + " m" : "—"}</td>
+        <td class="num ${dif === 0 ? "dif-bien" : "dif-mal"}">${dif > 0 ? "+" : ""}${dif}</td>
+        <td>${f.nota ? esc(f.nota) : ""}${f.fotoUrl
+          ? ` <a class="verfoto" href="${esc(f.fotoUrl)}" target="_blank">ver foto</a>`
+          : (f.fotoArchivo
+            ? ` <a class="verfoto" href="/${esc(f.fotoArchivo)}" target="_blank">ver foto</a>` : "")}</td>
+      </tr>`;
+    }).join("");
+    $("panelLista").classList.add("oculto");
+    $("panelDetalle").classList.remove("oculto");
+    window.scrollTo({top:0, behavior:"smooth"});
+  } catch(e){ /* nada */ }
+}
+
+let borrandoId = null;
+
+function pedirBorrar(id){
+  const r = (ultimaLista || []).find(x => x.id === id);
+  borrandoId = id;
+  $("borrarQue").textContent = r
+    ? "Vas a borrar la auditoría " + r.modo + " del " + r.guardado + ", con " + r.total_renglones + " renglones."
+    : "Vas a borrar esta auditoría.";
+  $("claveBorrar").value = "";
+  $("borrarAviso").style.display = "none";
+  $("capaBorrar").classList.remove("oculto");
+  $("claveBorrar").focus();
+}
+
+async function confirmarBorrar(){
+  if (!borrandoId) return;
+  const clave = $("claveBorrar").value;
+  if (!clave){ $("borrarAviso").textContent = "Escribe la contraseña."; $("borrarAviso").style.display = ""; return; }
+  try{
+    const j = await (await fetch("/api/borrar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id: borrandoId, clave: clave})
+    })).json();
+    if (j.ok){
+      $("capaBorrar").classList.add("oculto");
+      borrandoId = null;
+      $("panelDetalle").classList.add("oculto");
+      $("panelLista").classList.remove("oculto");
+      cargarRegistros();
+    } else {
+      $("borrarAviso").textContent = /ruta desconocida/i.test(j.error || "")
+        ? "El programa que está corriendo todavía no sabe borrar. Cierra la ventana negra de AUDITOR, vuelve a abrirla y refresca esta página."
+        : (j.error || "No se pudo borrar.");
+      $("borrarAviso").style.display = "";
+      $("claveBorrar").value = "";
+      $("claveBorrar").focus();
+    }
+  } catch(e){
+    $("borrarAviso").textContent = "El registro necesita el programa AUDITOR abierto.";
+    $("borrarAviso").style.display = "";
+  }
+}
+
+async function guardarEnRegistro(){
+  if (!auditoriaDia.length) return;
+  $("resumenDia").textContent = "Guardando en el registro...";
+  try{
+    const r = await fetch("/api/guardar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        modo: modo === "masiva" ? "Masiva" : "Fast",
+        almacenes: seleccionados().map(a => CODIGOS[a]).join(" + "),
+        quien: ($("quien").value || "").trim() || "—",
+        dispositivo: "computadora",
+        renglones: auditoriaDia
+      })
+    });
+    const j = await r.json();
+    if (j.ok){
+      $("resumenDia").textContent = "Guardada como " + (j.nombre || "") + ". " +
+        (j.sheets && j.sheets.ok
+          ? "Subida al Sheets con " + j.sheets.pegadas + " renglones."
+          : "No subió al Sheets: " + ((j.sheets && j.sheets.error) || "") +
+            " Puedes reintentarlo desde el Registro.");
+      $("guardar").disabled = true;
+    } else {
+      $("resumenDia").textContent = j.error || "No se pudo guardar.";
+    }
+  } catch(e){
+    $("resumenDia").textContent = "El registro necesita el programa AUDITOR abierto en tu computadora.";
+  }
+}
+
+function volverPortada(){
+  $("registro").classList.add("oculto");
+  $("trabajo").classList.add("oculto");
+  $("portada").classList.remove("oculto");
+  $("panelResultado").classList.add("oculto");
+  actual = null;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function seleccionados(){
+  return modo === "masiva" ? MASIVA.slice() : [almacenFast];
+}
+
+// ---------------------------------------------------------------
+// Consulta
+// ---------------------------------------------------------------
+async function consultar(){
+  const sku = $("sku").value.trim().toUpperCase();
+  $("sku").value = sku;
+  if (!sku){ $("ayuda").textContent = "Escribe un SKU para consultar."; return; }
+
+  const almacenes = seleccionados();
+  if (!almacenes.length){ $("ayuda").textContent = "Selecciona al menos un almacén."; return; }
+
+  let d = null;
+  if (EN_VIVO){
+    $("ayuda").textContent = "Preguntando a Odoo por " + sku + "...";
+    try{
+      const r = await fetch("/api/sku?sku=" + encodeURIComponent(sku));
+      const j = await r.json();
+      if (!j.ok){
+        $("panelResultado").classList.add("oculto");
+        actual = null;
+        $("ayuda").textContent = j.error || "Odoo no encontró ese SKU.";
+        return;
+      }
+      d = {nombre:j.nombre, almacenes:j.almacenes};
+    } catch(e){
+      $("panelResultado").classList.add("oculto");
+      actual = null;
+      $("ayuda").textContent = "No pude hablar con Odoo. Revisa que la ventana negra del programa AUDITOR siga abierta.";
+      return;
+    }
+  } else {
+    d = CATALOGO[sku];
+    if (!d){
+      $("panelResultado").classList.add("oculto");
+      actual = null;
+      $("ayuda").textContent = "En esta maqueta solo hay cuatro SKU de ejemplo. Abierta con el programa AUDITOR, funciona con cualquier SKU.";
+      return;
+    }
+  }
+
+  const filas = almacenes.map(a => {
+    const w = d.almacenes[a] || {aMano:0, disponible:0, salidas:[]};
+    const enSalida = w.salidas.reduce((t,s) => t + s.piezas, 0);
+    return {
+      almacen: a,
+      aMano: w.aMano,
+      disponible: (w.disponible === undefined ? Math.max(0, w.aMano - enSalida) : w.disponible),
+      enSalida: enSalida,
+      salidas: w.salidas,
+      contado: ""
+    };
+  });
+
+  actual = {sku, nombre:d.nombre, metros: d.metros || 0, porPaquete: paqueteDe(sku), filas};
+  capturarPaquetes = false;
+  $("ayuda").textContent = (modo === "masiva" ? "Auditoría Masiva: " : "Auditoría Fast: ") +
+    almacenes.map(a => CODIGOS[a]).join(" + ") + ". Consulta de lectura, Odoo no se modificó.";
+
+  const otros = FAST.filter(a => almacenes.indexOf(a) === -1);
+  $("resSku").textContent = sku;
+  $("resNombre").textContent = d.nombre;
+  $("resOtros").textContent = otros.length
+    ? "Otros almacenes: " + otros.map(a => CODIGOS[a] + " " + ((d.almacenes[a] || {aMano:0}).aMano)).join(" · ")
+    : "Estás viendo los cuatro almacenes.";
+
+  pintarResultado();
+  $("panelResultado").classList.remove("oculto");
+}
+
+function ocultarResultado(){
+  $("panelResultado").classList.add("oculto");
+  actual = null;
+  $("ayuda").textContent = modo === "masiva"
+    ? "Modo Masiva: toma los tres almacenes de golpe (WH, TRANS y AMSF)."
+    : "Modo Fast: elige un almacén y consulta solo ese.";
+}
+
+function totales(){
+  return actual.filas.reduce((t,f) => ({
+    aMano: t.aMano + f.aMano,
+    disponible: t.disponible + f.disponible,
+    enSalida: t.enSalida + f.enSalida
+  }), {aMano:0, disponible:0, enSalida:0});
+}
+
+function difTotal(){
+  let hay = false, dif = 0, piezas = 0;
+  actual.filas.forEach(f => {
+    if (f.contado !== ""){ hay = true; dif += Number(f.contado) - f.disponible; piezas++; }
+  });
+  return hay ? {dif, piezas} : null;
+}
+
+function pintarPaquete(){
+  const p = actual && actual.porPaquete;
+  $("zonaPaquete").classList.toggle("oculto", !p);
+  if (!p) { capturarPaquetes = false; return; }
+  const contado = actual.filas.reduce((a,f) => a + (f.contado === "" ? 0 : Number(f.contado)), 0);
+  $("paqTexto").innerHTML = "Este SKU viene en <strong>paquetes de " + p + " piezas</strong>. " +
+    "Disponibles hay " + (totales().disponible / p).toLocaleString("es-MX", {maximumFractionDigits:2}) + " paquetes" +
+    (contado ? ", y llevas contados " + (contado / p).toLocaleString("es-MX", {maximumFractionDigits:2}) + " paquetes" : "") + ".";
+  $("bPaquetes").textContent = capturarPaquetes ? "Capturar en piezas" : "Capturar en paquetes";
+}
+
+function pintarResultado(){
+  const t = totales();
+  const varios = actual.filas.length > 1;
+
+  $("nDisponible").textContent = t.disponible;
+  $("nAMano").textContent = t.aMano;
+  $("nSalida").textContent = t.enSalida;
+  $("pieSalida").textContent = varios
+    ? "sumadas de los " + actual.filas.length + " almacenes"
+    : "comprometidas en salidas pendientes";
+  $("pieAMano").textContent = varios
+    ? "sumadas de los " + actual.filas.length + " almacenes"
+    : "existencia total en el almacén";
+  $("pieDisponible").textContent = varios
+    ? "sumado de los " + actual.filas.length + " almacenes"
+    : "es contra esto que se audita";
+  $("eco1").textContent = t.disponible;
+  $("eco2").textContent = t.aMano;
+  $("eco3").textContent = t.aMano - t.disponible;
+  pintarMetraje();
+
+  // detalle por almacén, con captura del conteo
+  const p = actual.porPaquete;
+  const enPaq = capturarPaquetes && p;
+  $("thContado").textContent = enPaq ? "Contado (paquetes)" : "Contado";
+  $("cuerpoDetalle").innerHTML = actual.filas.map((f,i) => {
+    const mostrado = f.contado === "" ? "" : (enPaq ? (Number(f.contado) / p) : f.contado);
+    return `
+    <tr>
+      <td>${esc(f.almacen)}</td>
+      <td class="num">${f.aMano}</td>
+      <td class="num">${f.enSalida}</td>
+      <td class="num"><strong>${f.disponible}</strong></td>
+      <td class="num"><input class="mini" type="number" min="0" step="${enPaq ? "0.05" : "1"}" data-i="${i}" value="${esc(mostrado)}" placeholder="—"></td>
+      <td class="num" id="dif${i}">—</td>
+    </tr>`; }).join("");
+  pintarPaquete();
+
+  // salidas pendientes de todos los almacenes elegidos
+  const salidas = [];
+  actual.filas.forEach(f => f.salidas.forEach(s => salidas.push(Object.assign({almacen:f.almacen}, s))));
+  $("cuerpoSalidas").innerHTML = salidas.length
+    ? salidas.map(s => `<tr>
+        <td>${esc(s.almacen)}</td>
+        <td class="folio">${esc(s.folio)}</td>
+        <td>${esc(s.fecha)}</td>
+        <td>${esc(s.canal)}</td>
+        <td class="num">${s.piezas}</td>
+        <td><span class="etq ${s.estado === "Lista" ? "l" : "b"}">${esc(s.estado)}</span></td>
+      </tr>`).join("")
+    : `<tr><td colspan="6" class="vacio">Ningún almacén elegido tiene salidas pendientes de este SKU.</td></tr>`;
+
+  pintarDiferencias();
+}
+
+function pintarMetraje(){
+  const m = actual.metros;
+  $("tarjetaMetros").classList.toggle("oculto", !m);
+  $("ecoMetros").classList.toggle("oculto", !m);
+  if (!m) return;
+  const t = totales();
+  const r = difTotal();
+  const contado = actual.filas.reduce((a,f) => a + (f.contado === "" ? 0 : Number(f.contado)), 0);
+  $("nMetros").textContent = (t.disponible * m).toLocaleString("es-MX");
+  $("pieMetros").textContent = t.disponible + " piezas × " + m + " m";
+  $("ecoMetros").innerHTML = r
+    ? "En metros: disponible <strong>" + (t.disponible * m).toLocaleString("es-MX") + " m</strong> · " +
+      "contado <strong>" + (contado * m).toLocaleString("es-MX") + " m</strong> · " +
+      "diferencia <strong>" + (r.dif > 0 ? "+" : "") + (r.dif * m).toLocaleString("es-MX") + " m</strong>"
+    : "Cada pieza de este SKU son <strong>" + m + " metros</strong>. Al capturar el conteo te doy los metros contados y la diferencia en metros.";
+}
+
+function pintarDiferencias(){
+  actual.filas.forEach((f,i) => {
+    const celda = $("dif" + i);
+    if (!celda) return;
+    if (f.contado === ""){ celda.textContent = "—"; celda.className = "num"; return; }
+    const dif = Number(f.contado) - f.disponible;
+    celda.textContent = (dif > 0 ? "+" : "") + dif;
+    celda.className = "num " + (dif === 0 ? "dif-bien" : "dif-mal");
+  });
+
+  if (actual.metros) pintarMetraje();
+  if (actual.porPaquete) pintarPaquete();
+  const r = difTotal();
+  const tar = $("tarjetaDif");
+  tar.classList.remove("alerta","ok");
+  if (!r){
+    $("nDif").textContent = "—";
+    $("pieDif").textContent = "captura el conteo en la tabla de abajo";
+    return;
+  }
+  $("nDif").textContent = (r.dif > 0 ? "+" : "") + r.dif;
+  if (r.dif === 0){
+    tar.classList.add("ok");
+    $("pieDif").textContent = "el conteo cuadra en " + r.piezas + (r.piezas === 1 ? " almacén" : " almacenes");
+  } else {
+    tar.classList.add("alerta");
+    $("pieDif").textContent = (r.dif > 0 ? "hay más piezas que en Odoo" : "faltan piezas contra Odoo") +
+      " · " + r.piezas + (r.piezas === 1 ? " almacén capturado" : " almacenes capturados");
+  }
+}
+
+// ---------------------------------------------------------------
+// Agregar a la auditoría del día
+// ---------------------------------------------------------------
+function agregar(){
+  if (!actual) return;
+  const listos = actual.filas.filter(f => f.contado !== "");
+  if (!listos.length){
+    $("ayuda").textContent = "Captura las piezas contadas de al menos un almacén antes de agregarlo a la auditoría del día.";
+    return;
+  }
+  const quien = $("quien").value.trim() || "—";
+  listos.forEach(f => auditoriaDia.push({
+    sku: actual.sku, almacen: f.almacen, aMano: f.aMano, disponible: f.disponible,
+    enSalida: f.enSalida, contado: Number(f.contado), metros: actual.metros || 0,
+    porPaquete: actual.porPaquete || 0, quien
+  }));
+  pintarDia();
+  $("panelResultado").classList.add("oculto");
+  $("sku").value = "";
+  $("quien").value = "";
+  $("ayuda").textContent = "Se agregaron " + listos.length +
+    (listos.length === 1 ? " renglón" : " renglones") + " a la auditoría del día.";
+  $("sku").focus();
+  actual = null;
+}
+
+function pintarDia(){
+  if (!auditoriaDia.length){
+    $("cuerpoDia").innerHTML = `<tr><td colspan="10" class="vacio">Consulta un SKU, captura el conteo y aparecerá aquí.</td></tr>`;
+    $("resumenDia").textContent = "Todavía no hay SKU auditados hoy.";
+    $("excel").disabled = true;
+    $("guardar").disabled = true;
+    return;
+  }
+  $("cuerpoDia").innerHTML = auditoriaDia.map(r => {
+    const dif = r.contado - r.disponible;
+    return `<tr>
+      <td class="folio">${esc(r.sku)}</td>
+      <td>${esc(r.almacen)}</td>
+      <td class="num">${r.aMano}</td>
+      <td class="num">${r.enSalida}</td>
+      <td class="num"><strong>${r.disponible}</strong></td>
+      <td class="num">${r.contado}${r.porPaquete ? ' <span style="color:var(--gris)">(' + (r.contado / r.porPaquete).toLocaleString("es-MX", {maximumFractionDigits:2}) + ' paq)</span>' : ""}</td>
+      <td class="num">${r.metros ? (r.contado * r.metros).toLocaleString("es-MX") + " m" : "—"}</td>
+      <td class="num ${dif === 0 ? "dif-bien" : "dif-mal"}">${dif > 0 ? "+" : ""}${dif}</td>
+      <td>${esc(r.quien)}</td>
+    </tr>`;
+  }).join("");
+  const conDif = auditoriaDia.filter(r => r.contado !== r.disponible).length;
+  const skus = auditoriaDia.reduce((a,r) => a.indexOf(r.sku) === -1 ? a.concat([r.sku]) : a, []).length;
+  $("resumenDia").textContent = auditoriaDia.length + " renglones · " + skus +
+    (skus === 1 ? " SKU · " : " SKU · ") + (conDif ? conDif + " con diferencia" : "todos cuadran");
+  $("excel").disabled = false;
+  $("guardar").disabled = false;
+}
+
+// ---------------------------------------------------------------
+// Eventos
+// ---------------------------------------------------------------
+pintarModo();
+(async () => {
+  try{
+    const r = await fetch("/api/estado");
+    const j = await r.json();
+    if (j && j.ok){
+      EN_VIVO = true;
+      $("aviso").innerHTML = "<strong>Conectada a Odoo en modo solo lectura.</strong> " +
+        "Odoo " + (j.version || "") + " · " + (j.almacenes || 0) + " almacenes · " +
+        "la consulta de cada SKU es en vivo.";
+      $("aviso").style.background = "var(--negro)";
+      $("aviso").style.color = "var(--blanco)";
+      ocultarResultado();
+    }
+  } catch(e){ /* sin programa: se queda con los datos de ejemplo */ }
+})();
+// ---------------------------------------------------------------
+// Sugerencias mientras escribes
+// ---------------------------------------------------------------
+let tBusca = null, ultimaBusca = "";
+
+function cerrarSug(){ $("sug").classList.add("oculto"); $("sug").innerHTML = ""; }
+
+function pintarSug(lista, q){
+  if (!lista.length){
+    $("sug").innerHTML = `<div class="vacia">Ningún SKU se parece a ${esc(q)}</div>`;
+  } else {
+    $("sug").innerHTML = lista.map(r => `
+      <button data-sug="${esc(r.sku)}">
+        <div class="s1">${esc(r.sku)}</div>
+        <div class="s2">${esc(r.nombre || "")}</div>
+      </button>`).join("");
+  }
+  $("sug").classList.remove("oculto");
+}
+
+async function buscar(q){
+  if (q.length < 2){ cerrarSug(); return; }
+  if (EN_VIVO){
+    try{
+      const r = await fetch("/api/buscar?q=" + encodeURIComponent(q));
+      if (!r.ok) throw new Error("sin ruta");
+      const j = await r.json();
+      if (q !== ultimaBusca) return;
+      pintarSug((j && j.resultados) || [], q);
+    } catch(e){
+      $("sug").innerHTML = `<div class="vacia">No pude buscar en Odoo.<br>Cierra la ventana negra del programa AUDITOR y vuelve a abrirlo.</div>`;
+      $("sug").classList.remove("oculto");
+    }
+  } else {
+    const alto = q.toUpperCase();
+    pintarSug(Object.keys(CATALOGO).filter(s2 => s2.indexOf(alto) !== -1)
+      .map(s2 => ({sku:s2, nombre:CATALOGO[s2].nombre})), q);
+  }
+}
+
+$("sku").addEventListener("input", () => {
+  const q = $("sku").value.trim().toUpperCase();
+  ultimaBusca = q;
+  clearTimeout(tBusca);
+  if (q.length < 2){ cerrarSug(); return; }
+  tBusca = setTimeout(() => buscar(q), 230);
+});
+
+$("sug").addEventListener("click", e => {
+  const b = e.target.closest("[data-sug]");
+  if (!b) return;
+  $("sku").value = b.getAttribute("data-sug");
+  cerrarSug();
+  consultar();
+});
+
+document.addEventListener("click", e => {
+  if (!e.target.closest("#sug") && e.target.id !== "sku") cerrarSug();
+});
+
+$("consultar").addEventListener("click", () => { cerrarSug(); consultar(); });
+$("sku").addEventListener("keydown", e => { if (e.key === "Enter"){ cerrarSug(); consultar(); } });
+document.querySelectorAll(".tmodo").forEach(b =>
+  b.addEventListener("click", () => abrirModo(b.getAttribute("data-modo"))));
+$("bVolver").addEventListener("click", volverPortada);
+$("bVolver2").addEventListener("click", volverPortada);
+$("bVolverLista").addEventListener("click", () => {
+  $("panelDetalle").classList.add("oculto");
+  $("panelLista").classList.remove("oculto");
+});
+$("cuerpoRegistros").addEventListener("click", e => {
+  const ver = e.target.closest("[data-ver]");
+  if (ver) return verRegistro(ver.getAttribute("data-ver"));
+  const bo = e.target.closest("[data-borrar]");
+  if (bo) return pedirBorrar(bo.getAttribute("data-borrar"));
+});
+$("bCancelarBorrar").addEventListener("click", () => {
+  $("capaBorrar").classList.add("oculto");
+  borrandoId = null;
+});
+$("bConfirmarBorrar").addEventListener("click", confirmarBorrar);
+$("claveBorrar").addEventListener("keydown", e => { if (e.key === "Enter") confirmarBorrar(); });
+$("bSubir").addEventListener("click", async () => {
+  if (!registroAbierto) return;
+  $("bSubir").textContent = "Subiendo...";
+  try{
+    const j = await (await fetch("/api/subir", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id: registroAbierto.id})
+    })).json();
+    $("estadoSheets").textContent = j.ok
+      ? "Subida al Google Sheets con " + j.pegadas + " renglones."
+      : "No subió: " + (j.error || "");
+    if (j.ok) $("bSubir").classList.add("oculto");
+  } catch(e){
+    $("estadoSheets").textContent = "El programa AUDITOR tiene que estar abierto.";
+  }
+  $("bSubir").textContent = "Subir al Sheets";
+});
+
+$("bExcelReg").addEventListener("click", async () => {
+  if (!registroAbierto) return;
+  $("bExcelReg").textContent = "Preparando...";
+  const filas = await conFotos(registroAbierto.renglones || []);
+  const nom = (registroAbierto.nombre || ("Auditoria_" + (registroAbierto.fecha || hoy)))
+    .replace(/\//g, "-") + ".xlsx";
+  await bajarExcel(filas, nom);
+  $("bExcelReg").textContent = "Descargar Excel";
+});
+$("guardar").addEventListener("click", guardarEnRegistro);
+$("almacenes").addEventListener("click", e => {
+  const b = e.target.closest(".chip");
+  if (!b) return;
+  almacenFast = b.getAttribute("data-alm");
+  pintarModo();
+  ocultarResultado();
+  $("sku").focus();
+});
+$("agregar").addEventListener("click", agregar);
+$("bPaquetes").addEventListener("click", () => {
+  capturarPaquetes = !capturarPaquetes;
+  pintarResultado();
+  pintarDiferencias();
+});
+$("cuerpoDetalle").addEventListener("input", e => {
+  const i = e.target.getAttribute("data-i");
+  if (i === null || !actual) return;
+  const v = e.target.value;
+  const p = actual.porPaquete;
+  actual.filas[Number(i)].contado = (v === "" || !(capturarPaquetes && p)) ? v : String(Number(v) * p);
+  pintarDiferencias();
+  pintarPaquete();
+});
+pintarDia();
+
+// ---------------------------------------------------------------
+// Excel con el formato del machote
+// ---------------------------------------------------------------
+const ENC = new TextEncoder();
+const TABLA_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++){
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(b){
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < b.length; i++) c = TABLA_CRC[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function zip(archivos){
+  const u16 = n => [n & 255, (n >> 8) & 255];
+  const u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >> 24) & 255];
+  const cuerpo = [], centro = [];
+  let offset = 0, tamCentro = 0;
+  archivos.forEach(f => {
+    const nombre = ENC.encode(f.nombre), datos = f.datos, crc = crc32(datos), tam = datos.length;
+    const local = new Uint8Array([0x50,0x4b,3,4, ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(crc), ...u32(tam), ...u32(tam), ...u16(nombre.length), ...u16(0)]);
+    cuerpo.push(local, nombre, datos);
+    const cd = new Uint8Array([0x50,0x4b,1,2, ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(crc), ...u32(tam), ...u32(tam), ...u16(nombre.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(0), ...u32(offset)]);
+    centro.push(cd, nombre);
+    tamCentro += cd.length + nombre.length;
+    offset += local.length + nombre.length + tam;
+  });
+  const fin = new Uint8Array([0x50,0x4b,5,6, ...u16(0), ...u16(0), ...u16(archivos.length), ...u16(archivos.length),
+    ...u32(tamCentro), ...u32(offset), ...u16(0)]);
+  return new Blob([...cuerpo, ...centro, fin],
+    {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+const COL = ["A","B","C","D","E","F","G","H","I","J"];
+const ANCHOS = [16.5703125,16.140625,13,12.140625,18.5,11.7109375,11.7109375,13.5703125,16.140625,34];
+const txt = v => ({v, n:false});
+const nmr = v => ({v, n:true});
+
+function hojaXml(filas, altos, conDibujo){
+  const cols = ANCHOS.map((w,i) => `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("") +
+    `<col min="11" max="11" width="24" customWidth="1"/>`;
+  const rows = filas.map((celdas, i) => {
+    const r = i + 1;
+    const cs = celdas.map((c, j) => {
+      if (c === null || c === undefined) return "";
+      const s = r === 1 ? 1 : (c.n ? 3 : 2);
+      return c.n ? `<c r="${COL[j]}${r}" s="${s}"><v>${c.v}</v></c>`
+                 : `<c r="${COL[j]}${r}" s="${s}" t="inlineStr"><is><t>${esc(c.v)}</t></is></c>`;
+    }).join("");
+    const propio = altos && altos[r];
+    const alto = r === 1 ? ' ht="54" customHeight="1"'
+               : (propio ? ' ht="' + propio + '" customHeight="1"' : "");
+    return `<row r="${r}"${alto}>${cs}</row>`;
+  }).join("");
+  const dib = conDibujo ? `<drawing r:id="rIdDib"/>` : "";
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><cols>${cols}</cols><sheetData>${rows}</sheetData>${dib}</worksheet>`;
+}
+
+// ---------------------------------------------------------------
+// Fotos dentro del Excel
+// ---------------------------------------------------------------
+const PX = 9525;                       // un pixel en las unidades que usa Excel
+const ANCHO_FOTO = 150;                // pixeles
+
+function bytesDeBase64(b64){
+  const bruto = atob(b64);
+  const out = new Uint8Array(bruto.length);
+  for (let i = 0; i < bruto.length; i++) out[i] = bruto.charCodeAt(i);
+  return out;
+}
+
+function dibujoXml(imagenes){
+  const anclas = imagenes.map((im, i) => {
+    const cx = Math.round(ANCHO_FOTO * PX);
+    const cy = Math.round(ANCHO_FOTO * (im.alto / im.ancho) * PX);
+    return `<xdr:oneCellAnchor>
+<xdr:from><xdr:col>10</xdr:col><xdr:colOff>38100</xdr:colOff><xdr:row>${im.fila - 1}</xdr:row><xdr:rowOff>38100</xdr:rowOff></xdr:from>
+<xdr:ext cx="${cx}" cy="${cy}"/>
+<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${i + 2}" name="Foto ${i + 1}"/><xdr:cNvPicPr/></xdr:nvPicPr>
+<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rIdF${i + 1}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>
+<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>
+<xdr:clientData/></xdr:oneCellAnchor>`;
+  }).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">${anclas}</xdr:wsDr>`;
+}
+
+// Formato del machote: Aptos Narrow, encabezado gris centrado, bordes delgados
+const ESTILOS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><color theme="1"/><name val="Aptos Narrow"/></font><font><sz val="16"/><color theme="1"/><name val="Aptos Narrow"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E6E6"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color indexed="64"/></left><right style="thin"><color indexed="64"/></right><top style="thin"><color indexed="64"/></top><bottom style="thin"><color indexed="64"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+function construirXlsx(filas0){
+  const datos = filas0 || auditoriaDia;
+  const enc = ["SKU","Almacén","A la mano","En salida","Disponible para uso","Contado","Metraje","Diferencia","Quién contó","Incidencia"].map(txt);
+  const disp = r => (r.disponible === undefined ? (r.aMano || 0) : r.disponible);
+  const linea = r => [
+    txt(r.sku), txt(r.almacen), nmr(r.aMano), nmr(r.enSalida),
+    nmr(disp(r)), nmr(r.contado),
+    r.metros ? nmr(r.contado * r.metros) : txt("—"),
+    nmr(r.contado - disp(r)), txt(r.quien),
+    txt(r.nota || (r.fotoArchivo || r.foto || r.fotoUrl ? "Con foto" : "—")),
+    ...(r.fotoUrl && !r.foto ? [txt(r.fotoUrl)] : [])
+  ];
+  const filas = [enc, ...datos.map(linea)];
+
+  // fotos de las incidencias
+  const imagenes = [];
+  const altos = {};
+  datos.forEach((r, i) => {
+    if (!r.foto || String(r.foto).indexOf(",") === -1) return;
+    const fila = i + 2;
+    const ancho = r.fotoAncho || 4, alto = r.fotoAlto || 3;
+    imagenes.push({fila, b64: String(r.foto).split(",")[1], ancho, alto});
+    altos[fila] = Math.max(60, Math.round(ANCHO_FOTO * (alto / ancho) * 0.76) + 8);
+  });
+  const hayFotos = imagenes.length > 0;
+
+  const b = s => ENC.encode(s);
+  const extras = [];
+  if (hayFotos){
+    extras.push({nombre:"xl/drawings/drawing1.xml", datos: b(dibujoXml(imagenes))});
+    extras.push({nombre:"xl/drawings/_rels/drawing1.xml.rels", datos: b(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      imagenes.map((im,i) => `<Relationship Id="rIdF${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/foto${i+1}.jpeg"/>`).join("") +
+      `</Relationships>`)});
+    extras.push({nombre:"xl/worksheets/_rels/sheet1.xml.rels", datos: b(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdDib" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`)});
+    imagenes.forEach((im,i) => extras.push({nombre:"xl/media/foto" + (i+1) + ".jpeg", datos: bytesDeBase64(im.b64)}));
+  }
+
+  return zip([
+    {nombre:"[Content_Types].xml", datos: b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>` +
+      (hayFotos ? `<Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>` : "") +
+      `</Types>`)},
+    {nombre:"_rels/.rels", datos: b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)},
+    {nombre:"xl/workbook.xml", datos: b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Auditoría del día" sheetId="1" r:id="rId1"/></sheets></workbook>`)},
+    {nombre:"xl/_rels/workbook.xml.rels", datos: b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`)},
+    {nombre:"xl/styles.xml", datos: b(ESTILOS)},
+    {nombre:"xl/worksheets/sheet1.xml", datos: b(hojaXml(filas, altos, hayFotos))}
+  ].concat(extras));
+}
+
+let descargas = null;
+if (window.claude && window.claude.use){
+  window.claude.use("downloads").then(d => { descargas = d; }).catch(() => {});
+}
+async function conFotos(filas){
+  const out = [];
+  for (const f of filas){
+    if (f.foto || !f.fotoArchivo){ out.push(f); continue; }
+    try{
+      const resp = await fetch("/" + f.fotoArchivo);
+      const blob = await resp.blob();
+      const url = await new Promise(res => {
+        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob);
+      });
+      const dim = await new Promise(res => {
+        const im = new Image();
+        im.onload = () => res({w: im.width, h: im.height});
+        im.onerror = () => res({w: 4, h: 3});
+        im.src = url;
+      });
+      out.push(Object.assign({}, f, {foto: url, fotoAncho: dim.w, fotoAlto: dim.h}));
+    } catch(e){ out.push(f); }
+  }
+  return out;
+}
+
+async function bajarExcel(filas, nombre){
+  if (!descargas){
+    try{
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(construirXlsx(filas));
+      a.download = nombre;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      $("notaExcel").textContent = "Excel descargado con el formato de tu machote.";
+    } catch(e){
+      $("notaExcel").textContent = "No se pudo descargar el Excel aquí.";
+    }
+    return;
+  }
+  try{
+    await descargas.save({filename:nombre, data: construirXlsx(filas)});
+    $("notaExcel").textContent = "Excel descargado con el formato de tu machote.";
+  } catch(e){
+    if (e && e.code === "declined"){ $("notaExcel").textContent = "Descarga cancelada."; return; }
+    $("notaExcel").textContent = "No se pudo descargar el Excel. " + ((e && e.message) || "");
+  }
+}
+
+$("excel").addEventListener("click", async () => {
+  if (!auditoriaDia.length) return;
+  if (!descargas){
+    try{
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(construirXlsx());
+      a.download = "Auditoria_SKU_" + hoy + ".xlsx";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      $("notaExcel").textContent = "Excel descargado con el formato de tu machote.";
+    } catch(e){
+      $("notaExcel").textContent = "No se pudo descargar el Excel aquí. Abre la central con el programa AUDITOR.";
+    }
+    return;
+  }
+  $("notaExcel").textContent = "Preparando el Excel...";
+  try {
+    await descargas.save({filename:"Auditoria_SKU_" + hoy + ".xlsx", data: construirXlsx()});
+    $("notaExcel").textContent = "Excel descargado con el formato de tu machote.";
+  } catch (e) {
+    if (e && e.code === "declined"){ $("notaExcel").textContent = "Descarga cancelada."; return; }
+    $("notaExcel").textContent = "No se pudo descargar el Excel. " + ((e && e.message) || "");
+  }
+});
+
+// Registro del service worker: permite instalar la central como aplicación.
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
+</script>
+</body>
+</html>
